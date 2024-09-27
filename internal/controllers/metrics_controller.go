@@ -27,12 +27,7 @@ func (mc *MetricsController) HandlePost(w http.ResponseWriter, r *http.Request) 
 
 	parts := strings.Split(r.URL.Path, "/")
 
-	if len(parts) != 5 {
-		http.Error(w, "Invalid URL format", http.StatusBadRequest)
-		return
-	}
-
-	if parts[2] == "" || parts[1] != "update" {
+	if len(parts) != 5 || parts[2] == "" || parts[1] != "update" {
 		http.Error(w, "Invalid URL format", http.StatusNotFound)
 		return
 	}
