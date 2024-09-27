@@ -2,6 +2,7 @@ package controllers
 
 import (
 	"github.com/SmirnovND/metrics/domain"
+	"github.com/SmirnovND/metrics/internal/services/metricscollector"
 	"net/http"
 	"strconv"
 	"strings"
@@ -62,8 +63,7 @@ func (mc *MetricsController) HandlePost(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
-	memStorage := &domain.MemStorage{}
-	memStorage.AddMetric(metric)
+	metricscollector.ProcessMetrics(metric)
 
 	w.WriteHeader(http.StatusOK)
 }
