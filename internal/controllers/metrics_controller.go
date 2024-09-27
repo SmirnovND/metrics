@@ -32,7 +32,7 @@ func (mc *MetricsController) HandlePost(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
-	if parts[2] == "" {
+	if parts[2] == "" || parts[1] != "update" {
 		http.Error(w, "Invalid URL format", http.StatusNotFound)
 		return
 	}
