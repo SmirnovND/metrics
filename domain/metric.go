@@ -36,6 +36,6 @@ func (c *Counter) GetName() string {
 	return c.Name
 }
 
-func (g *Counter) GetType() string {
+func (c *Counter) GetType() string {
 	return "counter"
 }
