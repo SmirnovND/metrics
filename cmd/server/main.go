@@ -6,11 +6,11 @@ import (
 )
 
 func main() {
-	if err := run(); err != nil {
+	if err := Run(); err != nil {
 		panic(err)
 	}
 }
 
-func run() error {
+func Run() error {
 	return http.ListenAndServe(`:8080`, router.Router())
 }

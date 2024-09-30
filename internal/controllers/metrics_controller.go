@@ -2,7 +2,7 @@ package controllers
 
 import (
 	"github.com/SmirnovND/metrics/domain"
-	"github.com/SmirnovND/metrics/internal/services/metricscollector"
+	"github.com/SmirnovND/metrics/internal/use_case"
 	"net/http"
 	"strconv"
 	"strings"
@@ -58,7 +58,7 @@ func (mc *MetricsController) HandlePost(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
-	metricscollector.ProcessMetrics(metric)
+	use_case.ProcessMetrics(metric)
 
 	w.WriteHeader(http.StatusOK)
 }

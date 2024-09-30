@@ -5,5 +5,6 @@ type MemStorage struct {
 }
 
 func (m *MemStorage) AddMetric(metric Metric) {
+	//fmt.Println(metric)
 	m.collection = append(m.collection, metric)
 }
