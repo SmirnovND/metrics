@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"github.com/SmirnovND/metrics/internal/pkg/config"
+	"github.com/SmirnovND/metrics/internal/usecase"
 	"os"
 	"path/filepath"
 )

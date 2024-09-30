@@ -2,6 +2,7 @@ package controllers
 
 import (
 	"github.com/SmirnovND/metrics/domain"
+	"github.com/SmirnovND/metrics/internal/usecase"
 	"net/http"
 	"strconv"
 	"strings"
