@@ -3,7 +3,7 @@ package metricscollector
 import (
 	"bytes"
 	"fmt"
-	"github.com/SmirnovND/metrics/domain"
+	"github.com/SmirnovND/metrics/internal/domain"
 	"math/rand"
 	"net/http"
 	"runtime"

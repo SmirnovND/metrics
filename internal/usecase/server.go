@@ -1,7 +1,7 @@
 package usecase
 
 import (
-	"github.com/SmirnovND/metrics/domain"
+	"github.com/SmirnovND/metrics/internal/domain"
 	"github.com/SmirnovND/metrics/internal/services/metricscollector"
 )
 

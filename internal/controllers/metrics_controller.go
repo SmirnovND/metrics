@@ -1,7 +1,7 @@
 package controllers
 
 import (
-	"github.com/SmirnovND/metrics/domain"
+	"github.com/SmirnovND/metrics/internal/domain"
 	"github.com/SmirnovND/metrics/internal/usecase"
 	"net/http"
 	"strconv"
@@ -14,11 +14,7 @@ func NewMetricsController() *MetricsController {
 	return &MetricsController{}
 }
 
-func (mc *MetricsController) HandlePost(w http.ResponseWriter, r *http.Request) {
-	if r.Method != http.MethodPost {
-		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
-		return
-	}
+func (mc *MetricsController) HandleUpdate(w http.ResponseWriter, r *http.Request) {
 
 	if r.Header.Get("Content-Type") != "text/plain" {
 		http.Error(w, "Invalid Content-Type", http.StatusUnsupportedMediaType)
@@ -27,7 +23,7 @@ func (mc *MetricsController) HandlePost(w http.ResponseWriter, r *http.Request) 
 
 	parts := strings.Split(r.URL.Path, "/")
 
-	if len(parts) != 5 || parts[2] == "" || parts[1] != "update" {
+	if len(parts) != 5 || parts[2] == "" {
 		http.Error(w, "Invalid URL format", http.StatusNotFound)
 		return
 	}

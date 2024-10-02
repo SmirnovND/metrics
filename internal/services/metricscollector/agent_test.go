@@ -2,7 +2,7 @@ package metricscollector
 
 import (
 	"fmt"
-	"github.com/SmirnovND/metrics/domain"
+	"github.com/SmirnovND/metrics/internal/domain"
 	"net/http"
 	"net/http/httptest"
 	"runtime"
