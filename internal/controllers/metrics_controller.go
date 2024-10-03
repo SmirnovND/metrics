@@ -80,7 +80,7 @@ func (mc *MetricsController) HandleValue(w http.ResponseWriter, r *http.Request)
 		w.Write([]byte(fmt.Sprintf("%d", value)))
 	case float64:
 		// Преобразуем float64 в строку
-		w.Write([]byte(fmt.Sprintf("%f", value)))
+		w.Write([]byte(fmt.Sprintf("%.2f", value)))
 	default:
 		// Если тип не поддерживается, возвращаем ошибку
 		http.Error(w, "Unsupported metric type", http.StatusInternalServerError)
