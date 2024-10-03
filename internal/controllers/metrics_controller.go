@@ -21,11 +21,6 @@ func NewMetricsController(serviceCollector *collector.ServiceCollector) *Metrics
 
 func (mc *MetricsController) HandleUpdate(w http.ResponseWriter, r *http.Request) {
 
-	if r.Header.Get("Content-Type") != "text/plain" {
-		http.Error(w, "Invalid Content-Type", http.StatusUnsupportedMediaType)
-		return
-	}
-
 	// Получение параметров из URL
 	metricType := chi.URLParam(r, "type")
 	metricName := chi.URLParam(r, "name")
