@@ -76,7 +76,7 @@ func (mc *MetricsController) HandleValue(w http.ResponseWriter, r *http.Request)
 		return
 	}
 
-	w.Header().Set("Content-Type", "text/plain; charset=utf-8")
+	w.Header().Set("Content-Type", "text/plain")
 	w.WriteHeader(http.StatusOK)
 	// Определяем тип значения метрики
 	switch value := metric.GetValue().(type) {
