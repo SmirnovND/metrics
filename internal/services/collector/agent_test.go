@@ -29,6 +29,10 @@ func (m *MockMetric) GetType() string {
 	return m.typ
 }
 
+func (m *MockMetric) SetValue(value interface{}) {
+	m.value = value
+}
+
 // TestSend tests the Send method of Metrics.
 func TestSend(t *testing.T) {
 	// Создаем тестовый сервер
