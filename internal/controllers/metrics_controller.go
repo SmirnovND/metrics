@@ -1,7 +1,6 @@
 package controllers
 
 import (
-	"fmt"
 	"github.com/SmirnovND/metrics/internal/domain"
 	"github.com/SmirnovND/metrics/internal/services/collector"
 	"github.com/go-chi/chi/v5"
@@ -65,24 +64,11 @@ func (mc *MetricsController) HandleValue(w http.ResponseWriter, r *http.Request)
 	// Получение параметров из URL
 	metricType := chi.URLParam(r, "type")
 	metricName := chi.URLParam(r, "name")
-	metric, err := mc.ServiceCollector.FindMetric(metricName, metricType)
+	metricValue, err := mc.ServiceCollector.GetMetricValue(metricName, metricType)
 	if err != nil {
 		http.Error(w, "Not found metric", http.StatusNotFound)
 		return
 	}
 
-	w.Header().Set("Content-Type", "text/plain")
-	w.WriteHeader(http.StatusOK)
-	// Определяем тип значения метрики
-	switch value := metric.GetValue().(type) {
-	case int64:
-		// Преобразуем int64 в строку
-		w.Write([]byte(fmt.Sprintf("%d", value)))
-	case float64:
-		// Преобразуем float64 в строку
-		w.Write([]byte(fmt.Sprintf("%.2f", value)))
-	default:
-		// Если тип не поддерживается, возвращаем ошибку
-		http.Error(w, "Unsupported metric type", http.StatusInternalServerError)
-	}
+	w.Write([]byte(metricValue))
 }
