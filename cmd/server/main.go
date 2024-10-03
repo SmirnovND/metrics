@@ -1,6 +1,7 @@
 package main
 
 import (
+	"github.com/SmirnovND/metrics/internal/repo"
 	"github.com/SmirnovND/metrics/internal/router"
 	"net/http"
 )
@@ -12,5 +13,6 @@ func main() {
 }
 
 func Run() error {
-	return http.ListenAndServe(`:8080`, router.Router())
+	storage := repo.NewMetricRepo()
+	return http.ListenAndServe(`:8080`, router.Handler(storage))
 }

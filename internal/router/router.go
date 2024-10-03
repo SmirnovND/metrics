@@ -2,14 +2,19 @@ package router
 
 import (
 	"github.com/SmirnovND/metrics/internal/controllers"
+	"github.com/SmirnovND/metrics/internal/repo"
+	"github.com/SmirnovND/metrics/internal/services/collector"
 	"github.com/go-chi/chi/v5"
 	"net/http"
 )
 
-func Router() http.Handler {
+func Handler(storage *repo.MemStorage) http.Handler {
+	serviceCollector := collector.NewCollectorService(storage)
+	metricController := controllers.NewMetricsController(serviceCollector)
+
 	r := chi.NewRouter()
-	r.Post("/update/{type}/{name}/{value}", controllers.NewMetricsController().HandleUpdate)
-	//r.Get("/value", controllers.NewMetricsController().HandleUpdate)
+	r.Post("/update/{type}/{name}/{value}", metricController.HandleUpdate)
+	r.Get("/value/{type}/{name}", metricController.HandleValue)
 
 	// Обработчик для неподходящего метода (405 Method Not Allowed)
 	r.MethodNotAllowed(func(w http.ResponseWriter, r *http.Request) {

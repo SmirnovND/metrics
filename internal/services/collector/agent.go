@@ -1,4 +1,4 @@
-package metricscollector
+package collector
 
 import (
 	"bytes"

@@ -1,13 +1,13 @@
-package usecase
+package tracking
 
 import (
 	"github.com/SmirnovND/metrics/internal/pkg/config"
-	"github.com/SmirnovND/metrics/internal/services/metricscollector"
+	"github.com/SmirnovND/metrics/internal/services/collector"
 	"time"
 )
 
 func TrackingMetrics(cf config.Config) {
-	metrics := metricscollector.NewMetrics()
+	metrics := collector.NewMetrics()
 	// Тикер для обновления метрик
 	updateTicker := time.NewTicker(time.Second * time.Duration(cf.PollInterval))
 	defer updateTicker.Stop()

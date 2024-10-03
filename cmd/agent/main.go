@@ -3,7 +3,7 @@ package main
 import (
 	"fmt"
 	"github.com/SmirnovND/metrics/internal/pkg/config"
-	"github.com/SmirnovND/metrics/internal/usecase"
+	"github.com/SmirnovND/metrics/internal/services/tracking"
 	"os"
 	"path/filepath"
 )
@@ -15,8 +15,6 @@ func main() {
 		return
 	}
 	configPath := filepath.Join(cwd, "cmd", "agent", "config.yaml")
-	//cf := config.NewConfig("./cmd/agent/config.yaml")
 	cf := config.NewConfig(configPath)
-	usecase.TrackingMetrics(cf)
-	// Блокировка главной горутины
+	tracking.TrackingMetrics(cf)
 }
