@@ -25,33 +25,33 @@ var metricDefinitions = map[string]struct {
 	Type   string
 	Update func(rtm *runtime.MemStats) interface{}
 }{
-	"Alloc":         {"gauge", func(rtm *runtime.MemStats) interface{} { return float64(rtm.Alloc) }},
-	"BuckHashSys":   {"gauge", func(rtm *runtime.MemStats) interface{} { return float64(rtm.BuckHashSys) }},
-	"Frees":         {"counter", func(rtm *runtime.MemStats) interface{} { return int64(rtm.Frees) }},
-	"GCCPUFraction": {"gauge", func(rtm *runtime.MemStats) interface{} { return rtm.GCCPUFraction }},
-	"GCSys":         {"gauge", func(rtm *runtime.MemStats) interface{} { return float64(rtm.GCSys) }},
-	"HeapAlloc":     {"gauge", func(rtm *runtime.MemStats) interface{} { return float64(rtm.HeapAlloc) }},
-	"HeapIdle":      {"gauge", func(rtm *runtime.MemStats) interface{} { return float64(rtm.HeapIdle) }},
-	"HeapInuse":     {"gauge", func(rtm *runtime.MemStats) interface{} { return float64(rtm.HeapInuse) }},
-	"HeapObjects":   {"gauge", func(rtm *runtime.MemStats) interface{} { return float64(rtm.HeapObjects) }},
-	"HeapReleased":  {"gauge", func(rtm *runtime.MemStats) interface{} { return float64(rtm.HeapReleased) }},
-	"HeapSys":       {"gauge", func(rtm *runtime.MemStats) interface{} { return float64(rtm.HeapSys) }},
-	"LastGC":        {"gauge", func(rtm *runtime.MemStats) interface{} { return float64(rtm.LastGC) }},
-	"Lookups":       {"counter", func(rtm *runtime.MemStats) interface{} { return int64(rtm.Lookups) }},
-	"MCacheInuse":   {"gauge", func(rtm *runtime.MemStats) interface{} { return float64(rtm.MCacheInuse) }},
-	"MCacheSys":     {"gauge", func(rtm *runtime.MemStats) interface{} { return float64(rtm.MCacheSys) }},
-	"MSpanInuse":    {"gauge", func(rtm *runtime.MemStats) interface{} { return float64(rtm.MSpanInuse) }},
-	"MSpanSys":      {"gauge", func(rtm *runtime.MemStats) interface{} { return float64(rtm.MSpanSys) }},
-	"Mallocs":       {"counter", func(rtm *runtime.MemStats) interface{} { return int64(rtm.Mallocs) }},
-	"NextGC":        {"gauge", func(rtm *runtime.MemStats) interface{} { return float64(rtm.NextGC) }},
-	"NumForcedGC":   {"counter", func(rtm *runtime.MemStats) interface{} { return int64(rtm.NumForcedGC) }},
-	"NumGC":         {"counter", func(rtm *runtime.MemStats) interface{} { return int64(rtm.NumGC) }},
-	"OtherSys":      {"gauge", func(rtm *runtime.MemStats) interface{} { return float64(rtm.OtherSys) }},
-	"PauseTotalNs":  {"counter", func(rtm *runtime.MemStats) interface{} { return int64(rtm.PauseTotalNs) }},
-	"StackInuse":    {"gauge", func(rtm *runtime.MemStats) interface{} { return float64(rtm.StackInuse) }},
-	"StackSys":      {"gauge", func(rtm *runtime.MemStats) interface{} { return float64(rtm.StackSys) }},
-	"Sys":           {"gauge", func(rtm *runtime.MemStats) interface{} { return float64(rtm.Sys) }},
-	"TotalAlloc":    {"gauge", func(rtm *runtime.MemStats) interface{} { return float64(rtm.TotalAlloc) }},
+	"Alloc":         {domain.MetricTypeGauge, func(rtm *runtime.MemStats) interface{} { return float64(rtm.Alloc) }},
+	"BuckHashSys":   {domain.MetricTypeGauge, func(rtm *runtime.MemStats) interface{} { return float64(rtm.BuckHashSys) }},
+	"Frees":         {domain.MetricTypeCounter, func(rtm *runtime.MemStats) interface{} { return int64(rtm.Frees) }},
+	"GCCPUFraction": {domain.MetricTypeGauge, func(rtm *runtime.MemStats) interface{} { return rtm.GCCPUFraction }},
+	"GCSys":         {domain.MetricTypeGauge, func(rtm *runtime.MemStats) interface{} { return float64(rtm.GCSys) }},
+	"HeapAlloc":     {domain.MetricTypeGauge, func(rtm *runtime.MemStats) interface{} { return float64(rtm.HeapAlloc) }},
+	"HeapIdle":      {domain.MetricTypeGauge, func(rtm *runtime.MemStats) interface{} { return float64(rtm.HeapIdle) }},
+	"HeapInuse":     {domain.MetricTypeGauge, func(rtm *runtime.MemStats) interface{} { return float64(rtm.HeapInuse) }},
+	"HeapObjects":   {domain.MetricTypeGauge, func(rtm *runtime.MemStats) interface{} { return float64(rtm.HeapObjects) }},
+	"HeapReleased":  {domain.MetricTypeGauge, func(rtm *runtime.MemStats) interface{} { return float64(rtm.HeapReleased) }},
+	"HeapSys":       {domain.MetricTypeGauge, func(rtm *runtime.MemStats) interface{} { return float64(rtm.HeapSys) }},
+	"LastGC":        {domain.MetricTypeGauge, func(rtm *runtime.MemStats) interface{} { return float64(rtm.LastGC) }},
+	"Lookups":       {domain.MetricTypeCounter, func(rtm *runtime.MemStats) interface{} { return int64(rtm.Lookups) }},
+	"MCacheInuse":   {domain.MetricTypeGauge, func(rtm *runtime.MemStats) interface{} { return float64(rtm.MCacheInuse) }},
+	"MCacheSys":     {domain.MetricTypeGauge, func(rtm *runtime.MemStats) interface{} { return float64(rtm.MCacheSys) }},
+	"MSpanInuse":    {domain.MetricTypeGauge, func(rtm *runtime.MemStats) interface{} { return float64(rtm.MSpanInuse) }},
+	"MSpanSys":      {domain.MetricTypeGauge, func(rtm *runtime.MemStats) interface{} { return float64(rtm.MSpanSys) }},
+	"Mallocs":       {domain.MetricTypeCounter, func(rtm *runtime.MemStats) interface{} { return int64(rtm.Mallocs) }},
+	"NextGC":        {domain.MetricTypeGauge, func(rtm *runtime.MemStats) interface{} { return float64(rtm.NextGC) }},
+	"NumForcedGC":   {domain.MetricTypeCounter, func(rtm *runtime.MemStats) interface{} { return int64(rtm.NumForcedGC) }},
+	"NumGC":         {domain.MetricTypeCounter, func(rtm *runtime.MemStats) interface{} { return int64(rtm.NumGC) }},
+	"OtherSys":      {domain.MetricTypeGauge, func(rtm *runtime.MemStats) interface{} { return float64(rtm.OtherSys) }},
+	"PauseTotalNs":  {domain.MetricTypeCounter, func(rtm *runtime.MemStats) interface{} { return int64(rtm.PauseTotalNs) }},
+	"StackInuse":    {domain.MetricTypeGauge, func(rtm *runtime.MemStats) interface{} { return float64(rtm.StackInuse) }},
+	"StackSys":      {domain.MetricTypeGauge, func(rtm *runtime.MemStats) interface{} { return float64(rtm.StackSys) }},
+	"Sys":           {domain.MetricTypeGauge, func(rtm *runtime.MemStats) interface{} { return float64(rtm.Sys) }},
+	"TotalAlloc":    {domain.MetricTypeGauge, func(rtm *runtime.MemStats) interface{} { return float64(rtm.TotalAlloc) }},
 }
 
 func (m *Metrics) Update() {
@@ -66,9 +66,9 @@ func (m *Metrics) Update() {
 		value := def.Update(&rtm)
 
 		switch def.Type {
-		case "gauge":
+		case domain.MetricTypeGauge:
 			m.data[name] = &domain.Gauge{Value: value.(float64), Name: name}
-		case "counter":
+		case domain.MetricTypeCounter:
 			m.data[name] = &domain.Counter{Value: value.(int64), Name: name}
 		}
 	}

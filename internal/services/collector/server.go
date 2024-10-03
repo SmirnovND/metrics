@@ -19,7 +19,7 @@ func NewCollectorService(storage *repo.MemStorage) *ServiceCollector {
 
 // а тут реализация функциональности, без бизнес логики
 func (s *ServiceCollector) SaveMetric(m domain.Metric) {
-	s.storage.AddMetric(m)
+	s.storage.UpdateMetric(m)
 }
 
 func (s *ServiceCollector) GetMetricValue(nameMetric string, typeMetric string) (string, error) {

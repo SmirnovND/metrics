@@ -1,9 +1,13 @@
 package domain
 
+const MetricTypeGauge = "gauge"
+const MetricTypeCounter = "counter"
+
 type Metric interface {
 	GetValue() interface{}
 	GetName() string
 	GetType() string
+	SetValue(value interface{})
 }
 
 type Gauge struct {
@@ -15,12 +19,16 @@ func (g *Gauge) GetValue() interface{} {
 	return g.Value
 }
 
+func (g *Gauge) SetValue(value interface{}) {
+	g.Value = value.(float64)
+}
+
 func (g *Gauge) GetName() string {
 	return g.Name
 }
 
 func (g *Gauge) GetType() string {
-	return "gauge"
+	return MetricTypeGauge
 }
 
 type Counter struct {
@@ -37,5 +45,9 @@ func (c *Counter) GetName() string {
 }
 
 func (c *Counter) GetType() string {
-	return "counter"
+	return MetricTypeCounter
+}
+
+func (c *Counter) SetValue(value interface{}) {
+	c.Value = value.(int64)
 }

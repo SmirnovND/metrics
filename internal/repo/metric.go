@@ -17,10 +17,15 @@ func NewMetricRepo() *MemStorage {
 	}
 }
 
-func (m *MemStorage) AddMetric(metric domain.Metric) {
+func (m *MemStorage) UpdateMetric(metricNew domain.Metric) {
 	m.mu.Lock()         // Блокируем доступ к мапе
 	defer m.mu.Unlock() // Освобождаем доступ после обновления
-	m.collection[metric.GetName()] = metric
+	metricCurrent, ok := m.collection[metricNew.GetName()]
+	if ok && metricCurrent.GetType() == domain.MetricTypeCounter {
+		m.collection[metricCurrent.GetName()].SetValue(metricCurrent.GetValue().(int64) + metricNew.GetValue().(int64))
+	} else {
+		m.collection[metricNew.GetName()] = metricNew
+	}
 }
 
 func (m *MemStorage) GetMetric(name string) (domain.Metric, error) {

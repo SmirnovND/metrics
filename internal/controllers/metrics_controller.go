@@ -31,7 +31,7 @@ func (mc *MetricsController) HandleUpdate(w http.ResponseWriter, r *http.Request
 	}
 
 	var metric domain.Metric
-	if metricType == "gauge" {
+	if metricType == domain.MetricTypeGauge {
 		floatValue, err := strconv.ParseFloat(metricValue, 64)
 		if err != nil {
 			http.Error(w, "Invalid Value format", http.StatusBadRequest)
@@ -41,7 +41,7 @@ func (mc *MetricsController) HandleUpdate(w http.ResponseWriter, r *http.Request
 			Value: floatValue,
 			Name:  metricName,
 		}
-	} else if metricType == "counter" {
+	} else if metricType == domain.MetricTypeCounter {
 		intValue, err := strconv.ParseInt(metricValue, 10, 64)
 		if err != nil {
 			http.Error(w, "Invalid Value format", http.StatusBadRequest)
