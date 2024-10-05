@@ -20,7 +20,8 @@ func Run() error {
 	var flagRunAddr string
 	flag.StringVar(&flagRunAddr, "a", "localhost:8080", "address and port to run server")
 	flag.Parse()
-	if envRunAddr := os.Getenv("RUN_ADDR"); envRunAddr != "" {
+
+	if envRunAddr := os.Getenv("ADDRESS"); envRunAddr != "" {
 		flagRunAddr = envRunAddr
 	}
 	return http.ListenAndServe(flagRunAddr, router.Handler(storage))

@@ -7,6 +7,7 @@ import (
 	"gopkg.in/yaml.v3"
 	"log"
 	"os"
+	"strconv"
 )
 
 type Config struct {
@@ -54,6 +55,24 @@ func NewConfigCommand() (cf interfaces.ConfigAgent) {
 	flag.IntVar(&config.PollInterval, "p", 2, "poll interval")
 
 	flag.Parse()
+
+	if envRunAddr := os.Getenv("ADDRESS"); envRunAddr != "" {
+		config.ServerHost = envRunAddr
+	}
+
+	if envReportInterval := os.Getenv("REPORT_INTERVAL"); envReportInterval != "" {
+		reportInterval, err := strconv.Atoi(envReportInterval)
+		if err == nil {
+			config.ReportInterval = reportInterval
+		}
+	}
+
+	if envPollInterval := os.Getenv("POLL_INTERVAL"); envPollInterval != "" {
+		envPollInterval, err := strconv.Atoi(envPollInterval)
+		if err == nil {
+			config.PollInterval = envPollInterval
+		}
+	}
 
 	config.ServerHost = fmt.Sprintf("http://%s", config.ServerHost)
 	return config
