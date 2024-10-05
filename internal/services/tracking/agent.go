@@ -1,19 +1,19 @@
 package tracking
 
 import (
-	"github.com/SmirnovND/metrics/internal/pkg/config"
+	"github.com/SmirnovND/metrics/internal/interfaces"
 	"github.com/SmirnovND/metrics/internal/services/collector"
 	"time"
 )
 
-func TrackingMetrics(cf config.Config) {
+func MetricsTracking(cf interfaces.ConfigAgent) {
 	metrics := collector.NewMetrics()
 	// Тикер для обновления метрик
-	updateTicker := time.NewTicker(time.Second * time.Duration(cf.PollInterval))
+	updateTicker := time.NewTicker(time.Second * time.Duration(cf.GetPollInterval()))
 	defer updateTicker.Stop()
 
 	// Тикер для отправки метрик
-	sendTicker := time.NewTicker(time.Second * time.Duration(cf.ReportInterval))
+	sendTicker := time.NewTicker(time.Second * time.Duration(cf.GetReportInterval()))
 	defer sendTicker.Stop()
 
 	go func() {
@@ -24,7 +24,7 @@ func TrackingMetrics(cf config.Config) {
 
 	go func() {
 		for range sendTicker.C {
-			metrics.Send(cf.ServerHost) // Отправляем метрики
+			metrics.Send(cf.GetServerHost()) // Отправляем метрики
 		}
 	}()
 

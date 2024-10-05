@@ -1,6 +1,7 @@
 package main
 
 import (
+	"flag"
 	"github.com/SmirnovND/metrics/internal/repo"
 	"github.com/SmirnovND/metrics/internal/router"
 	"net/http"
@@ -14,5 +15,9 @@ func main() {
 
 func Run() error {
 	storage := repo.NewMetricRepo()
-	return http.ListenAndServe(`:8080`, router.Handler(storage))
+
+	var flagRunAddr string
+	flag.StringVar(&flagRunAddr, "a", "localhost:8080", "address and port to run server")
+	flag.Parse()
+	return http.ListenAndServe(flagRunAddr, router.Handler(storage))
 }
