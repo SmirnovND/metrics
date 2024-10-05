@@ -2,6 +2,7 @@ package config
 
 import (
 	"flag"
+	"fmt"
 	"github.com/SmirnovND/metrics/internal/interfaces"
 	"gopkg.in/yaml.v3"
 	"log"
@@ -47,8 +48,13 @@ func (c *Config) LoadConfig(patch string) {
 
 func NewConfigCommand() (cf interfaces.ConfigAgent) {
 	config := new(Config)
+
 	flag.StringVar(&config.ServerHost, "a", "localhost:8080", "address and port to run server")
 	flag.IntVar(&config.ReportInterval, "r", 10, "report interval")
 	flag.IntVar(&config.PollInterval, "p", 2, "poll interval")
+
+	flag.Parse()
+
+	config.ServerHost = fmt.Sprintf("http://%s", config.ServerHost)
 	return config
 }
