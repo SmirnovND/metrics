@@ -35,28 +35,24 @@ func NewConfigCommand() (cf interfaces.ConfigAgent) {
 
 	flag.Parse()
 
-	// Использование
-	config.ServerHost = getEnvOrDefault("ADDRESS", "localhost:8080")
-
-	envReportInterval := getEnvOrDefault("REPORT_INTERVAL", "10")
-	reportInterval, err := strconv.Atoi(envReportInterval)
-	if err == nil {
-		config.ReportInterval = reportInterval
+	if envRunAddr := os.Getenv("ADDRESS"); envRunAddr != "" {
+		config.ServerHost = envRunAddr
 	}
 
-	envPollInterval := getEnvOrDefault("POLL_INTERVAL", "2")
-	pollInterval, err := strconv.Atoi(envPollInterval)
-	if err == nil {
-		config.PollInterval = pollInterval
+	if envReportInterval := os.Getenv("REPORT_INTERVAL"); envReportInterval != "" {
+		reportInterval, err := strconv.Atoi(envReportInterval)
+		if err == nil {
+			config.ReportInterval = reportInterval
+		}
+	}
+
+	if envPollInterval := os.Getenv("POLL_INTERVAL"); envPollInterval != "" {
+		envPollInterval, err := strconv.Atoi(envPollInterval)
+		if err == nil {
+			config.PollInterval = envPollInterval
+		}
 	}
 
 	config.ServerHost = fmt.Sprintf("http://%s", config.ServerHost)
 	return config
-}
-
-func getEnvOrDefault(key string, defaultValue string) string {
-	if value, exists := os.LookupEnv(key); exists {
-		return value
-	}
-	return defaultValue
 }

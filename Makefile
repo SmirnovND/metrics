@@ -7,8 +7,8 @@ help:
 	@$(TAB) make up-agent - запустить агент
 
 up-server:
-	go run ./cmd/server/main.go
+	go run ./cmd/server/main.go -a=localhost:41839
 
 up-agent:
-	go run ./cmd/agent/main.go
+	go run ./cmd/agent/main.go -a=localhost:41839
 
