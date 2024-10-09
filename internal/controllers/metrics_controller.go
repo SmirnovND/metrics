@@ -2,17 +2,17 @@ package controllers
 
 import (
 	"github.com/SmirnovND/metrics/internal/domain"
-	"github.com/SmirnovND/metrics/internal/services/collector"
+	"github.com/SmirnovND/metrics/internal/services/server"
 	"github.com/go-chi/chi/v5"
 	"net/http"
 	"strconv"
 )
 
 type MetricsController struct {
-	ServiceCollector *collector.ServiceCollector
+	ServiceCollector *server.ServiceCollector
 }
 
-func NewMetricsController(serviceCollector *collector.ServiceCollector) *MetricsController {
+func NewMetricsController(serviceCollector *server.ServiceCollector) *MetricsController {
 	return &MetricsController{
 		ServiceCollector: serviceCollector,
 	}

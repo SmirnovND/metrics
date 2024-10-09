@@ -8,7 +8,7 @@ import (
 
 type MemStorage struct {
 	collection map[string]domain.Metric
-	mu         sync.Mutex
+	mu         sync.RWMutex
 }
 
 func NewMetricRepo() *MemStorage {
@@ -29,8 +29,8 @@ func (m *MemStorage) UpdateMetric(metricNew domain.Metric) {
 }
 
 func (m *MemStorage) GetMetric(name string) (domain.Metric, error) {
-	m.mu.Lock()         // Блокируем на чтение, так как могут быть конкурентные записи
-	defer m.mu.Unlock() // Освобождаем доступ после чтения
+	m.mu.RLock()         // Блокируем на чтение, так как могут быть конкурентные записи
+	defer m.mu.RUnlock() // Освобождаем доступ после чтения
 	v, ok := m.collection[name]
 	if !ok {
 		return nil, errors.New("no data for the metric")

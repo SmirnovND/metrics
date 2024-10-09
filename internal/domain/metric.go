@@ -1,7 +1,20 @@
 package domain
 
+import "sync"
+
 const MetricTypeGauge = "gauge"
 const MetricTypeCounter = "counter"
+
+func NewMetrics() *Metrics {
+	return &Metrics{
+		Data: make(map[string]Metric),
+	}
+}
+
+type Metrics struct {
+	Data map[string]Metric
+	Mu   sync.RWMutex
+}
 
 type Metric interface {
 	GetValue() interface{}

@@ -1,4 +1,4 @@
-package collector
+package agent
 
 import (
 	"fmt"
@@ -56,14 +56,15 @@ func TestSend(t *testing.T) {
 	defer ts.Close() // Закрываем сервер после теста
 
 	// Создаем объект Metrics
-	m := &Metrics{
-		data: map[string]domain.Metric{
+	m := &domain.Metrics{
+		Data: map[string]domain.Metric{
 			"testMetric": &MockMetric{name: "testMetric", value: 123.45, typ: "gauge"},
 		},
-		mu: sync.Mutex{},
+		Mu: sync.RWMutex{},
 	}
 
-	m.Send(ts.URL)
+	Send(m, ts.URL)
+
 }
 
 // MockMetricDefinition представляет собой мок для определения метрики.
