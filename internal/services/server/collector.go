@@ -1,7 +1,6 @@
 package server
 
 import (
-	"errors"
 	"fmt"
 	"github.com/SmirnovND/metrics/internal/domain"
 	"github.com/SmirnovND/metrics/internal/repo"
@@ -37,9 +36,9 @@ func (s *ServiceCollector) FindMetric(nameMetric string, typeMetric string) (dom
 		return nil, err
 	}
 
-	if metric.GetType() != typeMetric {
-		return nil, errors.New("not found metric with this type")
-	}
+	//if metric.GetType() != typeMetric {
+	//	return nil, errors.New("not found metric with this type")
+	//}
 
 	return metric, nil
 }
