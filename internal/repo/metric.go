@@ -20,9 +20,14 @@ func NewMetricRepo() *MemStorage {
 func (m *MemStorage) UpdateMetric(metricNew domain.MetricInterface) {
 	m.mu.Lock()         // Блокируем доступ к мапе
 	defer m.mu.Unlock() // Освобождаем доступ после обновления
+
 	metricCurrent, ok := m.collection[metricNew.GetName()]
 	if ok && metricCurrent.GetType() == domain.MetricTypeCounter {
-		m.collection[metricCurrent.GetName()].SetValue(metricCurrent.GetValue().(int64) + metricNew.GetValue().(int64))
+		if currentValue, ok := metricCurrent.GetValue().(int64); ok {
+			if newValue, ok := metricNew.GetValue().(int64); ok {
+				metricCurrent.SetValue(currentValue + newValue)
+			}
+		}
 	} else {
 		m.collection[metricNew.GetName()] = metricNew
 	}

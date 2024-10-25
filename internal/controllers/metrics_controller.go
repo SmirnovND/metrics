@@ -38,20 +38,14 @@ func (mc *MetricsController) HandleUpdate(w http.ResponseWriter, r *http.Request
 			http.Error(w, "Invalid Value format", http.StatusBadRequest)
 			return
 		}
-		metric = &domain.Gauge{
-			Value: floatValue,
-			Name:  metricName,
-		}
+		metric = (&domain.Gauge{}).SetType(domain.MetricTypeGauge).SetName(metricName).SetValue(floatValue)
 	} else if metricType == domain.MetricTypeCounter {
 		intValue, err := strconv.ParseInt(metricValue, 10, 64)
 		if err != nil {
 			http.Error(w, "Invalid Value format", http.StatusBadRequest)
 			return
 		}
-		metric = &domain.Counter{
-			Value: intValue,
-			Name:  metricName,
-		}
+		metric = (&domain.Counter{}).SetType(domain.MetricTypeCounter).SetName(metricName).SetValue(intValue)
 	} else {
 		http.Error(w, "Invalid URL format", http.StatusBadRequest)
 		return
@@ -98,11 +92,18 @@ func (mc *MetricsController) HandleValueJSON(w http.ResponseWriter, r *http.Requ
 		http.Error(w, "Error decode:"+err.Error(), http.StatusBadRequest)
 		return
 	}
-	metricValue, err := mc.ServiceCollector.GetMetricValue(metric.GetName(), metric.GetType())
+	metricResponse, err := mc.ServiceCollector.FindMetric(metric.GetName(), metric.GetType())
 	if err != nil {
 		http.Error(w, "Not found metric", http.StatusNotFound)
 		return
 	}
 
-	w.Write([]byte(metricValue))
+	jsonResponse, err := json.Marshal(metricResponse)
+	if err != nil {
+		http.Error(w, "Failed to marshal metric to JSON", http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	w.Write(jsonResponse)
 }
