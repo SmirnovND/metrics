@@ -56,7 +56,14 @@ func Update(m *domain.Metrics) {
 			m.Data[name] = (&domain.Metric{}).SetType(def.Type).SetValue(&floatVal).SetName(name)
 		case domain.MetricTypeCounter:
 			intVal, _ := value.(int64)
-			m.Data[name] = (&domain.Metric{}).SetType(def.Type).SetValue(&intVal).SetName(name)
+			if countMetric, ok := m.Data[name]; ok {
+				if value, ok := countMetric.GetValue().(*int64); ok {
+					newValue := *value + intVal
+					countMetric.SetValue(&newValue)
+				}
+			} else {
+				m.Data[name] = (&domain.Metric{}).SetType(def.Type).SetValue(&intVal).SetName(name)
+			}
 		}
 	}
 
