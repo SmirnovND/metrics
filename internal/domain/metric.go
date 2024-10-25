@@ -30,7 +30,12 @@ type Metric struct {
 }
 
 func (m *Metric) GetValue() interface{} {
-	return m.Value
+	if m.MType == MetricTypeGauge {
+		return m.Value
+	} else if m.MType == MetricTypeCounter {
+		return m.Delta
+	}
+	return nil
 }
 
 func (m *Metric) SetValue(value interface{}) MetricInterface {

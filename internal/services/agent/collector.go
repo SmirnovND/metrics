@@ -56,14 +56,7 @@ func Update(m *domain.Metrics) {
 			m.Data[name] = (&domain.Metric{}).SetType(def.Type).SetValue(&floatVal).SetName(name)
 		case domain.MetricTypeCounter:
 			intVal, _ := value.(int64)
-			if countMetric, ok := m.Data[name]; ok {
-				if value, ok := countMetric.GetValue().(*int64); ok {
-					newValue := *value + intVal
-					countMetric.SetValue(&newValue)
-				}
-			} else {
-				m.Data[name] = (&domain.Metric{}).SetType(def.Type).SetValue(&intVal).SetName(name)
-			}
+			m.Data[name] = (&domain.Metric{}).SetType(def.Type).SetValue(&intVal).SetName(name)
 		}
 	}
 
@@ -71,7 +64,8 @@ func Update(m *domain.Metrics) {
 		if pollCount.GetType() == domain.MetricTypeCounter {
 			if value, ok := pollCount.GetValue().(*int64); ok {
 				newValue := *value + 1
-				pollCount.SetValue(&newValue).SetName("PollCount")
+				// Создаем новую метрику и заменяем старую
+				m.Data["PollCount"] = (&domain.Metric{}).SetType(domain.MetricTypeCounter).SetValue(&newValue).SetName("PollCount")
 			}
 		}
 	} else {
