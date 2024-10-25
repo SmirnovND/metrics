@@ -57,15 +57,11 @@ func Update(m *domain.Metrics) {
 		}
 	}
 
-	if pollCount, ok := m.Data["PollCount"].(domain.MetricInterface); ok {
+	if pollCount, ok := m.Data["PollCount"]; ok {
 		if pollCount.GetType() == domain.MetricTypeCounter {
 			if value, ok := pollCount.GetValue().(*int64); ok {
 				newValue := *value + 1
 				pollCount.SetValue(&newValue).SetName("PollCount")
-			} else {
-				// Если значение не *int64, задаем его как 1
-				initialValue := int64(1)
-				pollCount.SetValue(&initialValue).SetName("PollCount")
 			}
 		}
 	} else {
