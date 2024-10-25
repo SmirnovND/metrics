@@ -51,7 +51,7 @@ func WithLogging(h http.Handler) http.Handler {
 			Str("uri", r.RequestURI).
 			Str("method", r.Method).
 			Int("status", responseData.status).
-			Int("status", responseData.size).
+			Int("size", responseData.size).
 			Dur("duration", duration).
 			Msg("Request information")
 	}
