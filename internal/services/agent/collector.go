@@ -53,7 +53,7 @@ func Update(m *domain.Metrics) {
 		switch def.Type {
 		case domain.MetricTypeGauge:
 		case domain.MetricTypeCounter:
-			m.Data[name] = (&domain.Metric{}).SetType(def.Type).SetValue(value).SetName(name)
+			m.Data[name] = (&domain.Metric{}).SetType(def.Type).SetValue(&value).SetName(name)
 		}
 	}
 
@@ -71,5 +71,6 @@ func Update(m *domain.Metrics) {
 	}
 
 	// Обновляем RandomValue
-	m.Data["RandomValue"] = (&domain.Metric{}).SetType(domain.MetricTypeGauge).SetValue(rand.Float64() * 100).SetName("RandomValue")
+	randomValue := rand.Float64() * 100
+	m.Data["RandomValue"] = (&domain.Metric{}).SetType(domain.MetricTypeGauge).SetValue(&randomValue).SetName("RandomValue")
 }
