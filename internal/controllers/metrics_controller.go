@@ -62,7 +62,7 @@ func (mc *MetricsController) HandleUpdate(w http.ResponseWriter, r *http.Request
 	w.WriteHeader(http.StatusOK)
 }
 
-func (mc *MetricsController) HandleUpdateJson(w http.ResponseWriter, r *http.Request) {
+func (mc *MetricsController) HandleUpdateJSON(w http.ResponseWriter, r *http.Request) {
 
 	var metric *domain.Metric
 	decoder := json.NewDecoder(r.Body)
@@ -90,7 +90,7 @@ func (mc *MetricsController) HandleValue(w http.ResponseWriter, r *http.Request)
 	w.Write([]byte(metricValue))
 }
 
-func (mc *MetricsController) HandleValueJson(w http.ResponseWriter, r *http.Request) {
+func (mc *MetricsController) HandleValueJSON(w http.ResponseWriter, r *http.Request) {
 	var metric *domain.Metric
 	decoder := json.NewDecoder(r.Body)
 	err := decoder.Decode(&metric)
