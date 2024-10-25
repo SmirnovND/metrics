@@ -62,10 +62,16 @@ func Update(m *domain.Metrics) {
 			if value, ok := pollCount.GetValue().(*int64); ok {
 				newValue := *value + 1
 				pollCount.SetValue(&newValue).SetName("PollCount")
+			} else {
+				// Если значение не *int64, задаем его как 1
+				initialValue := int64(1)
+				pollCount.SetValue(&initialValue).SetName("PollCount")
 			}
 		}
 	} else {
-		m.Data["PollCount"] = (&domain.Metric{}).SetType(domain.MetricTypeCounter).SetValue(1).SetName("PollCount")
+		// Создаем новую метрику, если её нет в m.Data
+		initialValue := int64(1)
+		m.Data["PollCount"] = (&domain.Metric{}).SetType(domain.MetricTypeCounter).SetValue(&initialValue).SetName("PollCount")
 	}
 
 	// Обновляем RandomValue
