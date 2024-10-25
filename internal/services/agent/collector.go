@@ -52,8 +52,11 @@ func Update(m *domain.Metrics) {
 
 		switch def.Type {
 		case domain.MetricTypeGauge:
+			floatVal, _ := value.(*float64)
+			m.Data[name] = (&domain.Metric{}).SetType(def.Type).SetValue(floatVal).SetName(name)
 		case domain.MetricTypeCounter:
-			m.Data[name] = (&domain.Metric{}).SetType(def.Type).SetValue(&value).SetName(name)
+			intVal, _ := value.(*int64)
+			m.Data[name] = (&domain.Metric{}).SetType(def.Type).SetValue(intVal).SetName(name)
 		}
 	}
 
