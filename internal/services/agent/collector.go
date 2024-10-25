@@ -59,8 +59,9 @@ func Update(m *domain.Metrics) {
 
 	if pollCount, ok := m.Data["PollCount"].(domain.MetricInterface); ok {
 		if pollCount.GetType() == domain.MetricTypeCounter {
-			value := m.Data["PollCount"].GetValue().(int64) + 1
-			m.Data["PollCount"].SetValue(value).SetName("PollCount")
+			value := m.Data["PollCount"].GetValue().(*int64)
+			newValue := *value + 1
+			m.Data["PollCount"].SetValue(&newValue).SetName("PollCount")
 		}
 	} else {
 		m.Data["PollCount"] = (&domain.Metric{}).SetValue(1).SetName("PollCount").SetType(domain.MetricTypeCounter)

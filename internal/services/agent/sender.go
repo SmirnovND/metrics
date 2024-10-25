@@ -32,13 +32,13 @@ func Send(m *domain.Metrics, serverHost string) {
 	}
 }
 
-// SendJson Метод для отправки метрик
-func SendJson(m *domain.Metrics, serverHost string) {
+// SendJSON Метод для отправки метрик
+func SendJSON(m *domain.Metrics, serverHost string) {
 	m.Mu.RLock()         // Блокируем доступ к мапе
 	defer m.Mu.RUnlock() // Освобождаем доступ после обновления
 
 	for _, metric := range m.Data {
-		url := fmt.Sprintf("%s/update", serverHost)
+		url := fmt.Sprintf("%s/update/", serverHost)
 
 		// Сериализация метрики в JSON
 		jsonData, err := json.Marshal(metric)
