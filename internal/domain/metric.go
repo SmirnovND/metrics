@@ -1,6 +1,8 @@
 package domain
 
-import "sync"
+import (
+	"sync"
+)
 
 const MetricTypeGauge = "gauge"
 const MetricTypeCounter = "counter"
