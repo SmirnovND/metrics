@@ -52,19 +52,20 @@ func Update(m *domain.Metrics) {
 
 		switch def.Type {
 		case domain.MetricTypeGauge:
-			m.Data[name] = &domain.Gauge{Value: value.(float64), Name: name}
 		case domain.MetricTypeCounter:
-			m.Data[name] = &domain.Counter{Value: value.(int64), Name: name}
+			m.Data[name] = (&domain.Metric{}).SetValue(value).SetName(name).SetType(def.Type)
 		}
 	}
 
-	// Обновляем PollCount
-	if pollCount, ok := m.Data["PollCount"].(*domain.Counter); ok {
-		m.Data["PollCount"] = &domain.Counter{Value: pollCount.Value + 1, Name: "PollCount"}
+	if pollCount, ok := m.Data["PollCount"].(domain.MetricInterface); ok {
+		if pollCount.GetType() == domain.MetricTypeCounter {
+			value := m.Data["PollCount"].GetValue().(int64) + 1
+			m.Data["PollCount"].SetValue(value).SetName("PollCount")
+		}
 	} else {
-		m.Data["PollCount"] = &domain.Counter{Value: 1, Name: "PollCount"}
+		m.Data["PollCount"] = (&domain.Metric{}).SetValue(1).SetName("PollCount").SetType(domain.MetricTypeCounter)
 	}
 
 	// Обновляем RandomValue
-	m.Data["RandomValue"] = &domain.Gauge{Value: rand.Float64() * 100, Name: "RandomValue"}
+	m.Data["RandomValue"] = (&domain.Metric{}).SetValue(rand.Float64() * 100).SetName("RandomValue").SetType(domain.MetricTypeGauge)
 }

@@ -1,6 +1,7 @@
 package controllers
 
 import (
+	"encoding/json"
 	"github.com/SmirnovND/metrics/internal/domain"
 	"github.com/SmirnovND/metrics/internal/services/server"
 	"github.com/go-chi/chi/v5"
@@ -30,7 +31,7 @@ func (mc *MetricsController) HandleUpdate(w http.ResponseWriter, r *http.Request
 		return
 	}
 
-	var metric domain.Metric
+	var metric domain.MetricInterface
 	if metricType == domain.MetricTypeGauge {
 		floatValue, err := strconv.ParseFloat(metricValue, 64)
 		if err != nil {
@@ -60,6 +61,22 @@ func (mc *MetricsController) HandleUpdate(w http.ResponseWriter, r *http.Request
 
 	w.WriteHeader(http.StatusOK)
 }
+
+func (mc *MetricsController) HandleUpdateJson(w http.ResponseWriter, r *http.Request) {
+
+	var metric *domain.Metric
+	decoder := json.NewDecoder(r.Body)
+	err := decoder.Decode(&metric)
+	if err != nil {
+		http.Error(w, "Error decode:"+err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	mc.ServiceCollector.SaveMetric(metric)
+
+	w.WriteHeader(http.StatusOK)
+}
+
 func (mc *MetricsController) HandleValue(w http.ResponseWriter, r *http.Request) {
 	// Получение параметров из URL
 	metricType := chi.URLParam(r, "type")

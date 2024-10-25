@@ -25,7 +25,7 @@ func MetricsTracking(cf interfaces.ConfigAgent) {
 
 	go func() {
 		for range sendTicker.C {
-			agent.Send(metrics, cf.GetServerHost())
+			agent.SendJson(metrics, cf.GetServerHost())
 		}
 	}()
 

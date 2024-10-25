@@ -18,7 +18,7 @@ func NewCollectorService(storage *repo.MemStorage) *ServiceCollector {
 }
 
 // а тут реализация функциональности, без бизнес логики
-func (s *ServiceCollector) SaveMetric(m domain.Metric) {
+func (s *ServiceCollector) SaveMetric(m domain.MetricInterface) {
 	s.storage.UpdateMetric(m)
 }
 
@@ -31,7 +31,7 @@ func (s *ServiceCollector) GetMetricValue(nameMetric string, typeMetric string) 
 	return s.formatValue(metric), nil
 }
 
-func (s *ServiceCollector) FindMetric(nameMetric string, typeMetric string) (domain.Metric, error) {
+func (s *ServiceCollector) FindMetric(nameMetric string, typeMetric string) (domain.MetricInterface, error) {
 	metric, err := s.storage.GetMetric(nameMetric)
 	if err != nil {
 		return nil, err
@@ -44,7 +44,7 @@ func (s *ServiceCollector) FindMetric(nameMetric string, typeMetric string) (dom
 	return metric, nil
 }
 
-func (s *ServiceCollector) formatValue(metric domain.Metric) string {
+func (s *ServiceCollector) formatValue(metric domain.MetricInterface) string {
 	switch value := metric.GetValue().(type) {
 	case int64:
 		return s.formatInt(value)

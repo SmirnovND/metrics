@@ -14,6 +14,7 @@ func Handler(storage *repo.MemStorage) http.Handler {
 
 	r := chi.NewRouter()
 	r.Post("/update/{type}/{name}/{value}", metricController.HandleUpdate)
+	r.Post("/update", metricController.HandleUpdateJson)
 	r.Get("/value/{type}/{name}", metricController.HandleValue)
 
 	// Обработчик для неподходящего метода (405 Method Not Allowed)

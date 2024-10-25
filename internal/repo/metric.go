@@ -7,17 +7,17 @@ import (
 )
 
 type MemStorage struct {
-	collection map[string]domain.Metric
+	collection map[string]domain.MetricInterface
 	mu         sync.RWMutex
 }
 
 func NewMetricRepo() *MemStorage {
 	return &MemStorage{
-		collection: make(map[string]domain.Metric),
+		collection: make(map[string]domain.MetricInterface),
 	}
 }
 
-func (m *MemStorage) UpdateMetric(metricNew domain.Metric) {
+func (m *MemStorage) UpdateMetric(metricNew domain.MetricInterface) {
 	m.mu.Lock()         // Блокируем доступ к мапе
 	defer m.mu.Unlock() // Освобождаем доступ после обновления
 	metricCurrent, ok := m.collection[metricNew.GetName()]
@@ -28,7 +28,7 @@ func (m *MemStorage) UpdateMetric(metricNew domain.Metric) {
 	}
 }
 
-func (m *MemStorage) GetMetric(name string) (domain.Metric, error) {
+func (m *MemStorage) GetMetric(name string) (domain.MetricInterface, error) {
 	m.mu.RLock()         // Блокируем на чтение, так как могут быть конкурентные записи
 	defer m.mu.RUnlock() // Освобождаем доступ после чтения
 	v, ok := m.collection[name]
