@@ -68,7 +68,20 @@ func (mc *MetricsController) HandleUpdateJSON(w http.ResponseWriter, r *http.Req
 
 	mc.ServiceCollector.SaveMetric(metric)
 
-	w.WriteHeader(http.StatusOK)
+	metricResponse, err := mc.ServiceCollector.FindMetric(metric.GetName(), metric.GetType())
+	if err != nil {
+		http.Error(w, "Not found metric", http.StatusNotFound)
+		return
+	}
+
+	jsonResponse, err := json.Marshal(metricResponse)
+	if err != nil {
+		http.Error(w, "Failed to marshal metric to JSON", http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	w.Write(jsonResponse)
 }
 
 func (mc *MetricsController) HandleValue(w http.ResponseWriter, r *http.Request) {
