@@ -4,6 +4,7 @@ import (
 	"github.com/SmirnovND/metrics/internal/domain"
 	"math/rand"
 	"runtime"
+	"runtime/debug"
 )
 
 var metricDefinitions = map[string]struct {
@@ -49,6 +50,8 @@ func Update(m *domain.Metrics) {
 	// Проходим по метрикам и обновляем значения
 	for name, def := range metricDefinitions {
 		runtime.GC()
+		debug.SetGCPercent(100)
+
 		value := def.Update(&rtm)
 
 		switch def.Type {
