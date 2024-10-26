@@ -17,7 +17,7 @@ func Handler(storage *repo.MemStorage) http.Handler {
 	r.Post("/update/", metricController.HandleUpdateJSON)
 	r.Get("/value/{type}/{name}", metricController.HandleValue)
 	r.Post("/value/{type}/{name}", metricController.HandleValueJSON)
-	//r.Post("/value/", metricController.HandleValueJSON)
+	r.Post("/value/", metricController.HandleValueJSON)
 
 	// Обработчик для неподходящего метода (405 Method Not Allowed)
 	r.MethodNotAllowed(func(w http.ResponseWriter, r *http.Request) {
