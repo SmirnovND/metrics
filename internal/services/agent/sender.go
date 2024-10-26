@@ -75,7 +75,7 @@ func baseSend(req *http.Request, metric domain.MetricInterface) error {
 
 	// Обработка ответа
 	if resp.StatusCode == http.StatusOK {
-		fmt.Println("MetricInterface sent successfully:", metric.GetName())
+		fmt.Println("MetricInterface sent successfully:", metric.GetName(), "Value:", metric.GetValue())
 	} else {
 		fmt.Printf("Failed to send metric %s: %s\n", metric.GetName(), resp.Status)
 	}
