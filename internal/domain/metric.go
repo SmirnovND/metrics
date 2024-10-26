@@ -1,7 +1,6 @@
 package domain
 
 import (
-	"encoding/json"
 	"sync"
 )
 
@@ -131,42 +130,4 @@ func (c *Counter) SetType(_ string) MetricInterface {
 func (c *Counter) SetName(name string) MetricInterface {
 	c.Name = name
 	return c
-}
-
-func (m *Metric) MarshalJSON() ([]byte, error) {
-	// Создаем временную структуру для сериализации
-	type Alias Metric
-
-	// Общая структура для сериализации
-	metric := &struct {
-		Value *float64 `json:"value,omitempty"`
-		Delta *int64   `json:"delta,omitempty"`
-		*Alias
-	}{
-		Alias: (*Alias)(m),
-	}
-
-	// Устанавливаем значения по умолчанию в зависимости от типа метрики
-	if m.MType == MetricTypeCounter {
-		if m.Delta == nil {
-			// Устанавливаем значение по умолчанию для Delta, если оно отсутствует
-			defaultDelta := int64(0)
-			metric.Delta = &defaultDelta
-		} else {
-			metric.Delta = m.Delta
-		}
-	}
-
-	if m.MType == MetricTypeGauge {
-		if m.Value == nil {
-			// Устанавливаем значение по умолчанию для Value, если оно отсутствует
-			defaultValue := float64(0)
-			metric.Value = &defaultValue
-		} else {
-			metric.Value = m.Value
-		}
-	}
-
-	// Выполняем стандартную сериализацию JSON
-	return json.Marshal(metric)
 }
