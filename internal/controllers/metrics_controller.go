@@ -123,6 +123,7 @@ func (mc *MetricsController) HandleValueJSON(w http.ResponseWriter, r *http.Requ
 	decoder := json.NewDecoder(r.Body)
 	err := decoder.Decode(&metric)
 	if err != nil {
+		metric = &domain.Metric{}
 		metric.SetName(chi.URLParam(r, "name"))
 		metric.SetType(chi.URLParam(r, "type"))
 		//http.Error(w, "Error decode:"+err.Error(), http.StatusBadRequest)
