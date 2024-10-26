@@ -89,6 +89,7 @@ func (g *Gauge) GetType() string {
 }
 
 func (g *Gauge) SetType(_ string) MetricInterface {
+	g.MType = MetricTypeGauge
 	return g
 }
 
@@ -126,6 +127,7 @@ func (c *Counter) SetValue(value interface{}) MetricInterface {
 }
 
 func (c *Counter) SetType(_ string) MetricInterface {
+	c.MType = MetricTypeCounter
 	return c
 }
 
