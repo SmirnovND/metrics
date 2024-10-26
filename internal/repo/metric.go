@@ -26,7 +26,11 @@ func (m *MemStorage) UpdateMetric(metricNew domain.MetricInterface) {
 		if currentValue, ok := metricCurrent.GetValue().(int64); ok {
 			if newValue, ok := metricNew.GetValue().(int64); ok {
 				metricCurrent.SetValue(currentValue + newValue)
+			} else {
+				m.collection[metricNew.GetName()] = metricNew
 			}
+		} else {
+			m.collection[metricNew.GetName()] = metricNew
 		}
 	} else {
 		m.collection[metricNew.GetName()] = metricNew
