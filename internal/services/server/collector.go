@@ -45,10 +45,10 @@ func (s *ServiceCollector) FindMetric(nameMetric string, typeMetric string) (dom
 
 func (s *ServiceCollector) formatValue(metric domain.MetricInterface) string {
 	switch value := metric.GetValue().(type) {
-	case int64:
-		return s.formatInt(value)
-	case float64:
-		return s.formatFloat(value)
+	case *int64:
+		return s.formatInt(*value)
+	case *float64:
+		return s.formatFloat(*value)
 	default:
 		return ""
 	}
