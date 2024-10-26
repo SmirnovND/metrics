@@ -28,7 +28,7 @@ var metricDefinitions = map[string]struct {
 	"MCacheSys":     {domain.MetricTypeGauge, func(rtm *runtime.MemStats) interface{} { return float64(rtm.MCacheSys) }},
 	"MSpanInuse":    {domain.MetricTypeGauge, func(rtm *runtime.MemStats) interface{} { return float64(rtm.MSpanInuse) }},
 	"MSpanSys":      {domain.MetricTypeGauge, func(rtm *runtime.MemStats) interface{} { return float64(rtm.MSpanSys) }},
-	"Mallocs":       {domain.MetricTypeCounter, func(rtm *runtime.MemStats) interface{} { return int64(rtm.Mallocs) }},
+	"Mallocs":       {domain.MetricTypeGauge, func(rtm *runtime.MemStats) interface{} { return float64(rtm.Mallocs) }},
 	"NextGC":        {domain.MetricTypeGauge, func(rtm *runtime.MemStats) interface{} { return float64(rtm.NextGC) }},
 	"NumForcedGC":   {domain.MetricTypeCounter, func(rtm *runtime.MemStats) interface{} { return int64(rtm.NumForcedGC) }},
 	"NumGC":         {domain.MetricTypeCounter, func(rtm *runtime.MemStats) interface{} { return int64(rtm.NumGC) }},
@@ -47,10 +47,11 @@ func Update(m *domain.Metrics) {
 	m.Mu.Lock()         // Блокируем доступ к мапе
 	defer m.Mu.Unlock() // Освобождаем доступ после обновления
 
+	runtime.GC()
+	debug.SetGCPercent(100)
+
 	// Проходим по метрикам и обновляем значения
 	for name, def := range metricDefinitions {
-		runtime.GC()
-		debug.SetGCPercent(100)
 
 		value := def.Update(&rtm)
 
