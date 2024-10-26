@@ -136,25 +136,35 @@ func (c *Counter) SetName(name string) MetricInterface {
 func (m *Metric) MarshalJSON() ([]byte, error) {
 	// Создаем временную структуру для сериализации
 	type Alias Metric
+
+	// Общая структура для сериализации
 	metric := &struct {
-		Delta int64   `json:"delta,omitempty"`
-		Value float64 `json:"value,omitempty"`
+		Value *float64 `json:"value,omitempty"`
+		Delta *int64   `json:"delta,omitempty"`
 		*Alias
 	}{
 		Alias: (*Alias)(m),
 	}
 
-	// Устанавливаем значения по умолчанию для Delta и Value
-	if m.MType == MetricTypeCounter && m.Delta == nil {
-		metric.Delta = 0 // Значение по умолчанию для Counter
-	} else if m.Delta != nil {
-		metric.Delta = *m.Delta
+	// Устанавливаем значения по умолчанию в зависимости от типа метрики
+	if m.MType == MetricTypeCounter {
+		if m.Delta == nil {
+			// Устанавливаем значение по умолчанию для Delta, если оно отсутствует
+			defaultDelta := int64(0)
+			metric.Delta = &defaultDelta
+		} else {
+			metric.Delta = m.Delta
+		}
 	}
 
-	if m.MType == MetricTypeGauge && m.Value == nil {
-		metric.Value = 0.0 // Значение по умолчанию для Gauge
-	} else if m.Value != nil {
-		metric.Value = *m.Value
+	if m.MType == MetricTypeGauge {
+		if m.Value == nil {
+			// Устанавливаем значение по умолчанию для Value, если оно отсутствует
+			defaultValue := float64(0)
+			metric.Value = &defaultValue
+		} else {
+			metric.Value = m.Value
+		}
 	}
 
 	// Выполняем стандартную сериализацию JSON
