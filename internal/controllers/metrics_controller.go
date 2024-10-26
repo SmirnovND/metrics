@@ -123,13 +123,10 @@ func (mc *MetricsController) HandleValueJSON(w http.ResponseWriter, r *http.Requ
 	decoder := json.NewDecoder(r.Body)
 	err := decoder.Decode(&metric)
 	if err != nil {
-		http.Error(w, "Error decode:"+err.Error(), http.StatusBadRequest)
-		return
-	}
-
-	if metric.GetName() == "" {
 		metric.SetName(chi.URLParam(r, "name"))
 		metric.SetType(chi.URLParam(r, "type"))
+		//http.Error(w, "Error decode:"+err.Error(), http.StatusBadRequest)
+		//return
 	}
 
 	metricResponse, err := mc.ServiceCollector.FindMetric(metric.GetName(), metric.GetType())
