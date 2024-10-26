@@ -97,19 +97,36 @@ func (mc *MetricsController) HandleValue(w http.ResponseWriter, r *http.Request)
 	w.Write([]byte(metricValue))
 }
 
-func (mc *MetricsController) HandleValueJSON(w http.ResponseWriter, r *http.Request) {
+func (mc *MetricsController) HandleValueQueryParamsJSON(w http.ResponseWriter, r *http.Request) {
 	// Получение параметров из URL
 	metricType := chi.URLParam(r, "type")
 	metricName := chi.URLParam(r, "name")
 
-	//var metric *domain.Metric
-	//decoder := json.NewDecoder(r.Body)
-	//err := decoder.Decode(&metric)
-	//if err != nil {
-	//	http.Error(w, "Error decode:"+err.Error(), http.StatusBadRequest)
-	//	return
-	//}
 	metricResponse, err := mc.ServiceCollector.FindMetric(metricName, metricType)
+	if err != nil {
+		http.Error(w, "Not found metric", http.StatusNotFound)
+		return
+	}
+
+	jsonResponse, err := json.Marshal(metricResponse)
+	if err != nil {
+		http.Error(w, "Failed to marshal metric to JSON", http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	w.Write(jsonResponse)
+}
+
+func (mc *MetricsController) HandleValueJSON(w http.ResponseWriter, r *http.Request) {
+	var metric *domain.Metric
+	decoder := json.NewDecoder(r.Body)
+	err := decoder.Decode(&metric)
+	if err != nil {
+		http.Error(w, "Error decode:"+err.Error(), http.StatusBadRequest)
+		return
+	}
+	metricResponse, err := mc.ServiceCollector.FindMetric(metric.GetName(), metric.GetType())
 	if err != nil {
 		http.Error(w, "Not found metric", http.StatusNotFound)
 		return
