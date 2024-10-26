@@ -31,7 +31,7 @@ func (s *ServiceCollector) GetMetricValue(nameMetric string, typeMetric string) 
 }
 
 func (s *ServiceCollector) FindMetric(nameMetric string, typeMetric string) (domain.MetricInterface, error) {
-	metric, err := s.storage.GetMetric(nameMetric)
+	metric, err := s.storage.GetMetric(nameMetric, typeMetric)
 	if err != nil {
 		return nil, err
 	}
