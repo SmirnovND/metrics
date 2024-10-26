@@ -126,6 +126,12 @@ func (mc *MetricsController) HandleValueJSON(w http.ResponseWriter, r *http.Requ
 		http.Error(w, "Error decode:"+err.Error(), http.StatusBadRequest)
 		return
 	}
+
+	if metric.GetName() == "" {
+		metric.SetName(chi.URLParam(r, "name"))
+		metric.SetType(chi.URLParam(r, "type"))
+	}
+
 	metricResponse, err := mc.ServiceCollector.FindMetric(metric.GetName(), metric.GetType())
 	if err != nil {
 		http.Error(w, "Not found metric", http.StatusNotFound)
