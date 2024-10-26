@@ -71,8 +71,9 @@ type Metrics struct {
 }
 
 type Gauge struct {
-	Value float64
-	Name  string
+	Value float64 `json:"value"`
+	Name  string  `json:"id"`
+	MType string  `json:"type"`
 }
 
 func (g *Gauge) GetValue() interface{} {
@@ -102,8 +103,9 @@ func (g *Gauge) SetValue(value interface{}) MetricInterface {
 }
 
 type Counter struct {
-	Value int64
-	Name  string
+	Value int64  `json:"delta"`
+	Name  string `json:"id"`
+	MType string `json:"type"`
 }
 
 func (c *Counter) GetValue() interface{} {

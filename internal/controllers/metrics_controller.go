@@ -38,14 +38,14 @@ func (mc *MetricsController) HandleUpdate(w http.ResponseWriter, r *http.Request
 			http.Error(w, "Invalid Value format", http.StatusBadRequest)
 			return
 		}
-		metric = (&domain.Metric{}).SetType(domain.MetricTypeGauge).SetName(metricName).SetValue(floatValue)
+		metric = (&domain.Gauge{}).SetType(domain.MetricTypeGauge).SetName(metricName).SetValue(floatValue)
 	} else if metricType == domain.MetricTypeCounter {
 		intValue, err := strconv.ParseInt(metricValue, 10, 64)
 		if err != nil {
 			http.Error(w, "Invalid Value format", http.StatusBadRequest)
 			return
 		}
-		metric = (&domain.Metric{}).SetType(domain.MetricTypeCounter).SetName(metricName).SetValue(intValue)
+		metric = (&domain.Counter{}).SetType(domain.MetricTypeCounter).SetName(metricName).SetValue(intValue)
 	} else {
 		http.Error(w, "Invalid URL format", http.StatusBadRequest)
 		return
