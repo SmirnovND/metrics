@@ -98,14 +98,18 @@ func (mc *MetricsController) HandleValue(w http.ResponseWriter, r *http.Request)
 }
 
 func (mc *MetricsController) HandleValueJSON(w http.ResponseWriter, r *http.Request) {
-	var metric *domain.Metric
-	decoder := json.NewDecoder(r.Body)
-	err := decoder.Decode(&metric)
-	if err != nil {
-		http.Error(w, "Error decode:"+err.Error(), http.StatusBadRequest)
-		return
-	}
-	metricResponse, err := mc.ServiceCollector.FindMetric(metric.GetName(), metric.GetType())
+	// Получение параметров из URL
+	metricType := chi.URLParam(r, "type")
+	metricName := chi.URLParam(r, "name")
+
+	//var metric *domain.Metric
+	//decoder := json.NewDecoder(r.Body)
+	//err := decoder.Decode(&metric)
+	//if err != nil {
+	//	http.Error(w, "Error decode:"+err.Error(), http.StatusBadRequest)
+	//	return
+	//}
+	metricResponse, err := mc.ServiceCollector.FindMetric(metricName, metricType)
 	if err != nil {
 		http.Error(w, "Not found metric", http.StatusNotFound)
 		return
