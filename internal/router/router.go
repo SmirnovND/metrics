@@ -15,7 +15,7 @@ func Handler(storage *repo.MemStorage) http.Handler {
 	r := chi.NewRouter()
 	r.Post("/update/{type}/{name}/{value}", metricController.HandleUpdate)
 	r.Post("/update/", metricController.HandleUpdateJSON)
-	//r.Get("/value/{type}/{name}", metricController.HandleValue)
+	r.Get("/value/{type}/{name}", metricController.HandleValue)
 	r.Post("/value/{type}/{name}", metricController.HandleValueJSON)
 	//r.Post("/value/", metricController.HandleValueJSON)
 
