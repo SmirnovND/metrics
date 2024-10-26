@@ -48,6 +48,7 @@ func Update(m *domain.Metrics) {
 
 	// Проходим по метрикам и обновляем значения
 	for name, def := range metricDefinitions {
+		runtime.GC()
 		value := def.Update(&rtm)
 
 		switch def.Type {
