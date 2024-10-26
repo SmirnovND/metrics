@@ -49,6 +49,10 @@ func (s *ServiceCollector) formatValue(metric domain.MetricInterface) string {
 		return s.formatInt(*value)
 	case *float64:
 		return s.formatFloat(*value)
+	case int64:
+		return s.formatInt(value)
+	case float64:
+		return s.formatFloat(value)
 	default:
 		return ""
 	}
