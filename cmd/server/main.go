@@ -2,7 +2,9 @@ package main
 
 import (
 	"flag"
-	"github.com/SmirnovND/metrics/internal/loggeer"
+	"github.com/SmirnovND/metrics/internal/middleware"
+	"github.com/SmirnovND/metrics/internal/pkg/compressor"
+	"github.com/SmirnovND/metrics/internal/pkg/loggeer"
 	"github.com/SmirnovND/metrics/internal/repo"
 	"github.com/SmirnovND/metrics/internal/router"
 	"net/http"
@@ -25,5 +27,10 @@ func Run() error {
 	if envRunAddr := os.Getenv("ADDRESS"); envRunAddr != "" {
 		flagRunAddr = envRunAddr
 	}
-	return http.ListenAndServe(flagRunAddr, loggeer.WithLogging(router.Handler(storage)))
+	return http.ListenAndServe(flagRunAddr, middleware.ChainMiddleware(
+		router.Handler(storage),
+		loggeer.WithLogging,
+		compressor.WithDecompression,
+		compressor.WithCompression,
+	))
 }

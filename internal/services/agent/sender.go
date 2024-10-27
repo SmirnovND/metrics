@@ -2,9 +2,11 @@ package agent
 
 import (
 	"bytes"
+	"compress/gzip"
 	"encoding/json"
 	"fmt"
 	"github.com/SmirnovND/metrics/internal/domain"
+	"io"
 	"net/http"
 )
 
@@ -25,7 +27,7 @@ func Send(m *domain.Metrics, serverHost string) {
 
 		req.Header.Set("Content-Type", "text/plain")
 
-		err = baseSend(req, metric)
+		err = baseSend(req, metric, true)
 		if err != nil {
 			continue
 		}
@@ -56,19 +58,36 @@ func SendJSON(m *domain.Metrics, serverHost string) {
 
 		req.Header.Set("Content-Type", "application/json")
 
-		err = baseSend(req, metric)
+		err = baseSend(req, metric, true)
 		if err != nil {
 			continue
 		}
 	}
 }
 
-func baseSend(req *http.Request, metric domain.MetricInterface) error {
+func baseSend(req *http.Request, metric domain.MetricInterface, enableCompression bool) error {
+	if enableCompression {
+		var buf bytes.Buffer
+		gz := gzip.NewWriter(&buf)
+
+		_, err := io.Copy(gz, req.Body)
+		if err != nil {
+			fmt.Println("Ошибка при сжатии запроса:", err)
+			return err
+		}
+		gz.Close()
+
+		// Заменяем тело запроса на сжатое
+		req.Body = io.NopCloser(&buf)
+		req.ContentLength = int64(buf.Len())
+		req.Header.Set("Content-Encoding", "gzip")
+	}
+
 	// Отправка запроса
 	client := &http.Client{}
 	resp, err := client.Do(req)
 	if err != nil {
-		fmt.Println("Error sending request:", err)
+		fmt.Println("Ошибка при отправке запроса:", err)
 		return err
 	}
 	defer resp.Body.Close()
@@ -83,5 +102,6 @@ func baseSend(req *http.Request, metric domain.MetricInterface) error {
 	} else {
 		fmt.Printf("Failed to send metric %s: %s\n", metric.GetName(), resp.Status)
 	}
+
 	return nil
 }
