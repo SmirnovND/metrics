@@ -118,6 +118,10 @@ func (mc *MetricsController) HandleValueQueryParamsJSON(w http.ResponseWriter, r
 	w.Write(jsonResponse)
 }
 
+func (mc *MetricsController) HandleRoot(w http.ResponseWriter, r *http.Request) {
+	w.WriteHeader(http.StatusOK)
+}
+
 func (mc *MetricsController) HandleValueJSON(w http.ResponseWriter, r *http.Request) {
 	var metric *domain.Metric
 	decoder := json.NewDecoder(r.Body)
