@@ -119,6 +119,7 @@ func (mc *MetricsController) HandleValueQueryParamsJSON(w http.ResponseWriter, r
 }
 
 func (mc *MetricsController) HandleRoot(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", r.Header.Get("Accept"))
 	w.WriteHeader(http.StatusOK)
 }
 
