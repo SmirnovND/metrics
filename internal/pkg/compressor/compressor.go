@@ -30,21 +30,14 @@ func WithCompression(next http.Handler) http.Handler {
 			return
 		}
 
-		// Проверяем заголовок Content-Type и устанавливаем его, если он не был задан
-		contentType := w.Header().Get("Content-Type")
-		if strings.HasPrefix(contentType, "application/json") || strings.HasPrefix(contentType, "text/html") {
-			w.Header().Set("Content-Type", contentType)
+		w.Header().Set("Content-Encoding", "gzip")
+		gz := gzip.NewWriter(w)
+		defer gz.Close()
 
-			gz := gzip.NewWriter(w)
-			defer gz.Close()
+		gzResponseWriter := gzipResponseWriter{Writer: gz, ResponseWriter: w}
 
-			gzResponseWriter := gzipResponseWriter{Writer: gz, ResponseWriter: w}
-			w.Header().Set("Content-Encoding", "gzip")
-			next.ServeHTTP(gzResponseWriter, r)
-		} else {
-			next.ServeHTTP(w, r)
-			return
-		}
+		next.ServeHTTP(gzResponseWriter, r)
+
 	})
 }
 
