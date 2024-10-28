@@ -11,9 +11,9 @@ type MemStorage struct {
 	mu         sync.RWMutex
 }
 
-func NewMetricRepo() *MemStorage {
+func NewMetricRepo(collection map[string]domain.MetricInterface) *MemStorage {
 	return &MemStorage{
-		collection: make(map[string]domain.MetricInterface),
+		collection: collection,
 	}
 }
 
@@ -49,4 +49,10 @@ func (m *MemStorage) GetMetric(name string, typeMetric string) (domain.MetricInt
 		return nil, errors.New("no data for the metric")
 	}
 	return v, nil
+}
+
+func (m *MemStorage) ExecuteWithLock(fn func(collection map[string]domain.MetricInterface)) {
+	m.mu.RLock()
+	defer m.mu.RUnlock()
+	fn(m.collection)
 }
