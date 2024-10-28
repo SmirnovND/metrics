@@ -34,7 +34,7 @@ func (c *Config) GetFlagRunAddr() string {
 func NewConfigCommand() (cf interfaces.ConfigServer) {
 	config := new(Config)
 
-	flag.IntVar(&config.StoreInterval, "i", 10, "")
+	flag.IntVar(&config.StoreInterval, "i", 300, "")
 	flag.StringVar(&config.FileStoragePath, "f", "./internal/resource/storage.json", "file storage path")
 	flag.BoolVar(&config.Restore, "r", true, "Restore")
 	flag.StringVar(&config.FlagRunAddr, "a", "localhost:8080", "address and port to run server")
