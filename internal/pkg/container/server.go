@@ -33,7 +33,7 @@ func (c *Container) provideDependencies() {
 	c.container.Provide(config.NewConfigCommand)
 
 	// Регистрируем db
-	c.container.Provide(db.NewDb)
+	c.container.Provide(db.NewDB)
 
 	// Регистрируем репозиторий, передав конфигурацию
 	c.container.Provide(func(cf interfaces.ConfigServer) *repo.MemStorage {

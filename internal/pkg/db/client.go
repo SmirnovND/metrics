@@ -6,7 +6,7 @@ import (
 	"log"
 )
 
-func NewDb(c interfaces.ConfigServer) *sqlx.DB {
+func NewDB(c interfaces.ConfigServer) *sqlx.DB {
 	db, err := sqlx.Open(
 		"postgres",
 		c.GetDbDsn(),
