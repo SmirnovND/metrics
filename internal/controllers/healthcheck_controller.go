@@ -6,17 +6,17 @@ import (
 )
 
 type HealthcheckController struct {
-	Db *sqlx.DB
+	DB *sqlx.DB
 }
 
-func NewHealthcheckController(Db *sqlx.DB) *HealthcheckController {
+func NewHealthcheckController(DB *sqlx.DB) *HealthcheckController {
 	return &HealthcheckController{
-		Db: Db,
+		DB: DB,
 	}
 }
 
 func (hc *HealthcheckController) HandlePing(w http.ResponseWriter, r *http.Request) {
-	err := hc.Db.Ping()
+	err := hc.DB.Ping()
 	if err != nil {
 		http.Error(w, "Failed to connect DB", http.StatusInternalServerError)
 		return
