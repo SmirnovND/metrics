@@ -7,6 +7,10 @@ import (
 )
 
 func NewDB(c interfaces.ConfigServer) *sqlx.DB {
+	if c.GetDBDsn() == "" {
+		return nil
+	}
+
 	db, err := sqlx.Open(
 		"postgres",
 		c.GetDBDsn(),
