@@ -7,7 +7,7 @@ help:
 	@$(TAB) make up-agent - запустить агент
 
 up-server:
-	go run ./cmd/server/main.go -a=localhost:41839
+	go run ./cmd/server/main.go -a=localhost:41839 -d=postgresql://developer:developer@localhost:5432/postgres?sslmode=disable
 
 up-agent:
 	go run ./cmd/agent/main.go -a=localhost:41839

@@ -7,4 +7,5 @@ type ConfigServer interface {
 	GetFileStoragePath() string
 	IsRestore() bool
 	GetFlagRunAddr() string
+	GetDbDsn() string
 }
