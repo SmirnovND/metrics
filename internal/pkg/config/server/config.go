@@ -60,8 +60,8 @@ func NewConfigCommand() (cf interfaces.ConfigServer) {
 		config.FileStoragePath = FileStoragePath
 	}
 
-	if FileStoragePath := os.Getenv("DATABASE_DSN"); FileStoragePath != "" {
-		config.FileStoragePath = FileStoragePath
+	if Dsn := os.Getenv("DATABASE_DSN"); Dsn != "" {
+		config.FileStoragePath = Dsn
 	}
 
 	if Restore := os.Getenv("RESTORE"); Restore != "" {
