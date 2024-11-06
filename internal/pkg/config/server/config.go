@@ -61,7 +61,7 @@ func NewConfigCommand() (cf interfaces.ConfigServer) {
 	}
 
 	if Dsn := os.Getenv("DATABASE_DSN"); Dsn != "" {
-		config.FileStoragePath = Dsn
+		config.DBDsn = Dsn
 	}
 
 	if Restore := os.Getenv("RESTORE"); Restore != "" {
