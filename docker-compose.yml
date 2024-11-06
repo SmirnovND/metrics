@@ -1,0 +1,18 @@
+version: '3'
+services:
+    postgres:
+        image: postgres:11-alpine
+        volumes:
+            - ./docker/postgres/data:/var/lib/postgresql/data
+            - ./docker/postgres/config:/etc/postgresql  # Добавляем volume для конфигурации
+        environment:
+            - POSTGRES_DB=metrics
+            - POSTGRES_USER=developer
+            - POSTGRES_PASSWORD=developer
+        ports:
+            - 5432:5432
+        networks:
+            - net
+networks:
+    net:
+        driver: bridge

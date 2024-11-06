@@ -1,7 +1,6 @@
 package server
 
 import (
-	"errors"
 	"fmt"
 	"github.com/SmirnovND/metrics/internal/domain"
 	"github.com/SmirnovND/metrics/internal/repo"
@@ -18,7 +17,7 @@ func NewCollectorService(storage *repo.MemStorage) *ServiceCollector {
 }
 
 // а тут реализация функциональности, без бизнес логики
-func (s *ServiceCollector) SaveMetric(m domain.Metric) {
+func (s *ServiceCollector) SaveMetric(m domain.MetricInterface) {
 	s.storage.UpdateMetric(m)
 }
 
@@ -31,21 +30,21 @@ func (s *ServiceCollector) GetMetricValue(nameMetric string, typeMetric string) 
 	return s.formatValue(metric), nil
 }
 
-func (s *ServiceCollector) FindMetric(nameMetric string, typeMetric string) (domain.Metric, error) {
-	metric, err := s.storage.GetMetric(nameMetric)
+func (s *ServiceCollector) FindMetric(nameMetric string, typeMetric string) (domain.MetricInterface, error) {
+	metric, err := s.storage.GetMetric(nameMetric, typeMetric)
 	if err != nil {
 		return nil, err
-	}
-
-	if metric.GetType() != typeMetric {
-		return nil, errors.New("not found metric with this type")
 	}
 
 	return metric, nil
 }
 
-func (s *ServiceCollector) formatValue(metric domain.Metric) string {
+func (s *ServiceCollector) formatValue(metric domain.MetricInterface) string {
 	switch value := metric.GetValue().(type) {
+	case *int64:
+		return s.formatInt(*value)
+	case *float64:
+		return s.formatFloat(*value)
 	case int64:
 		return s.formatInt(value)
 	case float64:
