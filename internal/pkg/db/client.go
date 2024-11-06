@@ -9,7 +9,7 @@ import (
 func NewDB(c interfaces.ConfigServer) *sqlx.DB {
 	db, err := sqlx.Open(
 		"postgres",
-		c.GetDbDsn(),
+		c.GetDBDsn(),
 	)
 
 	if err != nil {
