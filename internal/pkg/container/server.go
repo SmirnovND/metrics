@@ -6,6 +6,7 @@ import (
 	config "github.com/SmirnovND/metrics/internal/pkg/config/server"
 	"github.com/SmirnovND/metrics/internal/pkg/db"
 	"github.com/SmirnovND/metrics/internal/repo"
+	"github.com/jmoiron/sqlx"
 	_ "github.com/lib/pq"
 	"go.uber.org/dig"
 )
@@ -13,11 +14,11 @@ import (
 // Container - структура контейнера, обертывающая dig-контейнер
 type Container struct {
 	container           *dig.Container
-	startCollectionFunc func(cf interfaces.ConfigServer) map[string]domain.MetricInterface
+	startCollectionFunc func(cf interfaces.ConfigServer, db *sqlx.DB) map[string]domain.MetricInterface
 }
 
 // NewContainer - создаёт новый DI-контейнер и регистрирует зависимости
-func NewContainer(startCollectionFunc func(cf interfaces.ConfigServer) map[string]domain.MetricInterface) *Container {
+func NewContainer(startCollectionFunc func(cf interfaces.ConfigServer, db *sqlx.DB) map[string]domain.MetricInterface) *Container {
 	c := &Container{
 		container:           dig.New(),
 		startCollectionFunc: startCollectionFunc,
@@ -36,8 +37,8 @@ func (c *Container) provideDependencies() {
 	c.container.Provide(db.NewDB)
 
 	// Регистрируем репозиторий, передав конфигурацию
-	c.container.Provide(func(cf interfaces.ConfigServer) *repo.MemStorage {
-		return repo.NewMetricRepo(c.startCollectionFunc(cf))
+	c.container.Provide(func(cf interfaces.ConfigServer, db *sqlx.DB) *repo.MemStorage {
+		return repo.NewMetricRepo(c.startCollectionFunc(cf, db))
 	})
 }
 

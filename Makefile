@@ -12,3 +12,5 @@ up-server:
 up-agent:
 	go run ./cmd/agent/main.go -a=localhost:41839
 
+migrate-create:
+	migrate create -ext sql -dir migrations -seq $(name)

@@ -32,11 +32,11 @@ func Run() error {
 		db = d
 	})
 
-	defer usecase.Backup(cf, storage)
+	defer usecase.Backup(cf, storage, db)
 	stopCh := make(chan struct{})
 	defer close(stopCh)
 
-	usecase.TimedBackup(cf, storage, stopCh)
+	usecase.TimedBackup(cf, storage, db, stopCh)
 	return http.ListenAndServe(cf.GetFlagRunAddr(), middleware.ChainMiddleware(
 		router.Handler(storage, db),
 		loggeer.WithLogging,
