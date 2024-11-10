@@ -4,6 +4,7 @@ import (
 	"github.com/SmirnovND/metrics/internal/domain"
 	"math/rand"
 	"runtime"
+	"runtime/debug"
 )
 
 var metricDefinitions = map[string]struct {
@@ -12,7 +13,7 @@ var metricDefinitions = map[string]struct {
 }{
 	"Alloc":         {domain.MetricTypeGauge, func(rtm *runtime.MemStats) interface{} { return float64(rtm.Alloc) }},
 	"BuckHashSys":   {domain.MetricTypeGauge, func(rtm *runtime.MemStats) interface{} { return float64(rtm.BuckHashSys) }},
-	"Frees":         {domain.MetricTypeCounter, func(rtm *runtime.MemStats) interface{} { return int64(rtm.Frees) }},
+	"Frees":         {domain.MetricTypeGauge, func(rtm *runtime.MemStats) interface{} { return float64(rtm.Frees) }},
 	"GCCPUFraction": {domain.MetricTypeGauge, func(rtm *runtime.MemStats) interface{} { return rtm.GCCPUFraction }},
 	"GCSys":         {domain.MetricTypeGauge, func(rtm *runtime.MemStats) interface{} { return float64(rtm.GCSys) }},
 	"HeapAlloc":     {domain.MetricTypeGauge, func(rtm *runtime.MemStats) interface{} { return float64(rtm.HeapAlloc) }},
@@ -22,17 +23,17 @@ var metricDefinitions = map[string]struct {
 	"HeapReleased":  {domain.MetricTypeGauge, func(rtm *runtime.MemStats) interface{} { return float64(rtm.HeapReleased) }},
 	"HeapSys":       {domain.MetricTypeGauge, func(rtm *runtime.MemStats) interface{} { return float64(rtm.HeapSys) }},
 	"LastGC":        {domain.MetricTypeGauge, func(rtm *runtime.MemStats) interface{} { return float64(rtm.LastGC) }},
-	"Lookups":       {domain.MetricTypeCounter, func(rtm *runtime.MemStats) interface{} { return int64(rtm.Lookups) }},
+	"Lookups":       {domain.MetricTypeGauge, func(rtm *runtime.MemStats) interface{} { return float64(rtm.Lookups) }},
 	"MCacheInuse":   {domain.MetricTypeGauge, func(rtm *runtime.MemStats) interface{} { return float64(rtm.MCacheInuse) }},
 	"MCacheSys":     {domain.MetricTypeGauge, func(rtm *runtime.MemStats) interface{} { return float64(rtm.MCacheSys) }},
 	"MSpanInuse":    {domain.MetricTypeGauge, func(rtm *runtime.MemStats) interface{} { return float64(rtm.MSpanInuse) }},
 	"MSpanSys":      {domain.MetricTypeGauge, func(rtm *runtime.MemStats) interface{} { return float64(rtm.MSpanSys) }},
-	"Mallocs":       {domain.MetricTypeCounter, func(rtm *runtime.MemStats) interface{} { return int64(rtm.Mallocs) }},
+	"Mallocs":       {domain.MetricTypeGauge, func(rtm *runtime.MemStats) interface{} { return float64(rtm.Mallocs) }},
 	"NextGC":        {domain.MetricTypeGauge, func(rtm *runtime.MemStats) interface{} { return float64(rtm.NextGC) }},
-	"NumForcedGC":   {domain.MetricTypeCounter, func(rtm *runtime.MemStats) interface{} { return int64(rtm.NumForcedGC) }},
-	"NumGC":         {domain.MetricTypeCounter, func(rtm *runtime.MemStats) interface{} { return int64(rtm.NumGC) }},
+	"NumForcedGC":   {domain.MetricTypeGauge, func(rtm *runtime.MemStats) interface{} { return float64(rtm.NumForcedGC) }},
+	"NumGC":         {domain.MetricTypeGauge, func(rtm *runtime.MemStats) interface{} { return float64(rtm.NumGC) }},
 	"OtherSys":      {domain.MetricTypeGauge, func(rtm *runtime.MemStats) interface{} { return float64(rtm.OtherSys) }},
-	"PauseTotalNs":  {domain.MetricTypeCounter, func(rtm *runtime.MemStats) interface{} { return int64(rtm.PauseTotalNs) }},
+	"PauseTotalNs":  {domain.MetricTypeGauge, func(rtm *runtime.MemStats) interface{} { return float64(rtm.PauseTotalNs) }},
 	"StackInuse":    {domain.MetricTypeGauge, func(rtm *runtime.MemStats) interface{} { return float64(rtm.StackInuse) }},
 	"StackSys":      {domain.MetricTypeGauge, func(rtm *runtime.MemStats) interface{} { return float64(rtm.StackSys) }},
 	"Sys":           {domain.MetricTypeGauge, func(rtm *runtime.MemStats) interface{} { return float64(rtm.Sys) }},
@@ -46,25 +47,39 @@ func Update(m *domain.Metrics) {
 	m.Mu.Lock()         // Блокируем доступ к мапе
 	defer m.Mu.Unlock() // Освобождаем доступ после обновления
 
+	runtime.GC()
+	debug.SetGCPercent(100)
+
 	// Проходим по метрикам и обновляем значения
 	for name, def := range metricDefinitions {
+
 		value := def.Update(&rtm)
 
 		switch def.Type {
 		case domain.MetricTypeGauge:
-			m.Data[name] = &domain.Gauge{Value: value.(float64), Name: name}
+			floatVal, _ := value.(float64)
+			m.Data[name] = (&domain.Metric{}).SetType(def.Type).SetValue(&floatVal).SetName(name)
 		case domain.MetricTypeCounter:
-			m.Data[name] = &domain.Counter{Value: value.(int64), Name: name}
+			intVal, _ := value.(int64)
+			m.Data[name] = (&domain.Metric{}).SetType(def.Type).SetValue(&intVal).SetName(name)
 		}
 	}
 
-	// Обновляем PollCount
-	if pollCount, ok := m.Data["PollCount"].(*domain.Counter); ok {
-		m.Data["PollCount"] = &domain.Counter{Value: pollCount.Value + 1, Name: "PollCount"}
+	if pollCount, ok := m.Data["PollCount"]; ok {
+		if pollCount.GetType() == domain.MetricTypeCounter {
+			if value, ok := pollCount.GetValue().(*int64); ok {
+				newValue := *value + 1
+				// Создаем новую метрику и заменяем старую
+				m.Data["PollCount"] = (&domain.Metric{}).SetType(domain.MetricTypeCounter).SetValue(&newValue).SetName("PollCount")
+			}
+		}
 	} else {
-		m.Data["PollCount"] = &domain.Counter{Value: 1, Name: "PollCount"}
+		// Создаем новую метрику, если её нет в m.Data
+		initialValue := int64(1)
+		m.Data["PollCount"] = (&domain.Metric{}).SetType(domain.MetricTypeCounter).SetValue(&initialValue).SetName("PollCount")
 	}
 
 	// Обновляем RandomValue
-	m.Data["RandomValue"] = &domain.Gauge{Value: rand.Float64() * 100, Name: "RandomValue"}
+	randomValue := rand.Float64() * 100
+	m.Data["RandomValue"] = (&domain.Metric{}).SetType(domain.MetricTypeGauge).SetValue(&randomValue).SetName("RandomValue")
 }
