@@ -1,11 +1,14 @@
 package main
 
 import (
-	"flag"
+	"github.com/SmirnovND/metrics/internal/middleware"
+	"github.com/SmirnovND/metrics/internal/pkg/compressor"
+	config "github.com/SmirnovND/metrics/internal/pkg/config/server"
+	"github.com/SmirnovND/metrics/internal/pkg/loggeer"
 	"github.com/SmirnovND/metrics/internal/repo"
 	"github.com/SmirnovND/metrics/internal/router"
+	usecase "github.com/SmirnovND/metrics/internal/usecase/server"
 	"net/http"
-	"os"
 )
 
 func main() {
@@ -15,14 +18,17 @@ func main() {
 }
 
 func Run() error {
-	storage := repo.NewMetricRepo()
+	cf := config.NewConfigCommand()
+	storage := repo.NewMetricRepo(usecase.RestoreBackup(cf))
+	defer usecase.Backup(cf, storage)
+	stopCh := make(chan struct{})
+	defer close(stopCh)
 
-	var flagRunAddr string
-	flag.StringVar(&flagRunAddr, "a", "localhost:8080", "address and port to run server")
-	flag.Parse()
-
-	if envRunAddr := os.Getenv("ADDRESS"); envRunAddr != "" {
-		flagRunAddr = envRunAddr
-	}
-	return http.ListenAndServe(flagRunAddr, router.Handler(storage))
+	usecase.TimedBackup(cf, storage, stopCh)
+	return http.ListenAndServe(cf.GetFlagRunAddr(), middleware.ChainMiddleware(
+		router.Handler(storage),
+		loggeer.WithLogging,
+		compressor.WithDecompression,
+		compressor.WithCompression,
+	))
 }

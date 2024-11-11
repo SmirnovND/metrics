@@ -29,8 +29,18 @@ func (m *MockMetric) GetType() string {
 	return m.typ
 }
 
-func (m *MockMetric) SetValue(value interface{}) {
+func (m *MockMetric) SetValue(value interface{}) domain.MetricInterface {
 	m.value = value
+	return m
+}
+
+func (m *MockMetric) SetType(_ string) domain.MetricInterface {
+	return m
+}
+
+func (m *MockMetric) SetName(name string) domain.MetricInterface {
+	m.name = name
+	return m
 }
 
 // TestSend tests the Send method of Metrics.
@@ -57,7 +67,7 @@ func TestSend(t *testing.T) {
 
 	// Создаем объект Metrics
 	m := &domain.Metrics{
-		Data: map[string]domain.Metric{
+		Data: map[string]domain.MetricInterface{
 			"testMetric": &MockMetric{name: "testMetric", value: 123.45, typ: "gauge"},
 		},
 		Mu: sync.RWMutex{},
