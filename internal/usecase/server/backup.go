@@ -6,12 +6,13 @@ import (
 	"github.com/SmirnovND/metrics/internal/interfaces"
 	"github.com/SmirnovND/metrics/internal/repo"
 	"github.com/SmirnovND/metrics/internal/services/server"
+	"github.com/jmoiron/sqlx"
 	"time"
 )
 
-func TimedBackup(cf interfaces.ConfigServer, storage *repo.MemStorage, stopCh <-chan struct{}) {
+func TimedBackup(cf interfaces.ConfigServer, storage *repo.MemStorage, db *sqlx.DB, stopCh <-chan struct{}) {
 	backupTicker := time.NewTicker(cf.GetStoreInterval())
-	service := server.NewServiceBackup(storage, cf)
+	service := server.NewServiceBackup(storage, cf, db)
 
 	go func() {
 		defer backupTicker.Stop()
@@ -27,11 +28,11 @@ func TimedBackup(cf interfaces.ConfigServer, storage *repo.MemStorage, stopCh <-
 	}()
 }
 
-func Backup(cf interfaces.ConfigServer, storage *repo.MemStorage) {
-	service := server.NewServiceBackup(storage, cf)
+func Backup(cf interfaces.ConfigServer, storage *repo.MemStorage, db *sqlx.DB) {
+	service := server.NewServiceBackup(storage, cf, db)
 	service.Backup()
 }
 
-func RestoreBackup(cf interfaces.ConfigServer) map[string]domain.MetricInterface {
-	return server.RestoreFromFile(cf.GetFileStoragePath(), cf.IsRestore())
+func RestoreBackup(cf interfaces.ConfigServer, db *sqlx.DB) map[string]domain.MetricInterface {
+	return server.RestoreMetric(cf, db)
 }

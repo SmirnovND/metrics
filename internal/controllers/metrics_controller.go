@@ -83,6 +83,38 @@ func (mc *MetricsController) HandleUpdateJSON(w http.ResponseWriter, r *http.Req
 	w.Header().Set("Content-Type", "application/json")
 	w.Write(jsonResponse)
 }
+func (mc *MetricsController) HandleUpdatesJSON(w http.ResponseWriter, r *http.Request) {
+
+	var metrics []*domain.Metric
+	var metricsResponse []*domain.Metric
+	decoder := json.NewDecoder(r.Body)
+	err := decoder.Decode(&metrics)
+	if err != nil {
+		http.Error(w, "Error decode:"+err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	for _, metric := range metrics {
+		mc.ServiceCollector.SaveMetric(metric)
+
+		metricResponse, err := mc.ServiceCollector.FindMetric(metric.GetName(), metric.GetType())
+		if err != nil {
+			http.Error(w, "Not found metric", http.StatusNotFound)
+			return
+		}
+
+		metricsResponse = append(metricsResponse, metricResponse.(*domain.Metric))
+	}
+	
+	jsonResponse, err := json.Marshal(metricsResponse)
+	if err != nil {
+		http.Error(w, "Failed to marshal metric to JSON", http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	w.Write(jsonResponse)
+}
 
 func (mc *MetricsController) HandleValue(w http.ResponseWriter, r *http.Request) {
 	// Получение параметров из URL
