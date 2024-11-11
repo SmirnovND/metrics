@@ -27,7 +27,7 @@ func Send(m *domain.Metrics, serverHost string) {
 
 		req.Header.Set("Content-Type", "text/plain")
 
-		err = baseSend(req, metric, true)
+		err = baseSend(req, true)
 		if err != nil {
 			continue
 		}
@@ -38,34 +38,36 @@ func Send(m *domain.Metrics, serverHost string) {
 func SendJSON(m *domain.Metrics, serverHost string) {
 	m.Mu.RLock()         // Блокируем доступ к мапе
 	defer m.Mu.RUnlock() // Освобождаем доступ после обновления
+	var metrics []*domain.Metric
+	url := fmt.Sprintf("%s/updates/", serverHost)
 
-	for _, metric := range m.Data {
-		url := fmt.Sprintf("%s/update/", serverHost)
+	for _, v := range m.Data {
+		metrics = append(metrics, v.(*domain.Metric))
+	}
 
-		// Сериализация метрики в JSON
-		jsonData, err := json.Marshal(metric)
-		if err != nil {
-			fmt.Println("Ошибка при сериализации метрики:", err)
-			continue
-		}
+	// Сериализация метрики в JSON
+	jsonData, err := json.Marshal(metrics)
+	if err != nil {
+		fmt.Println("Ошибка при сериализации метрики:", err)
+		return
+	}
 
-		// Создание HTTP-запроса
-		req, err := http.NewRequest("POST", url, bytes.NewBuffer(jsonData))
-		if err != nil {
-			fmt.Println("Error creating request:", err)
-			continue
-		}
+	// Создание HTTP-запроса
+	req, err := http.NewRequest("POST", url, bytes.NewBuffer(jsonData))
+	if err != nil {
+		fmt.Println("Error creating request:", err)
+		return
+	}
 
-		req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("Content-Type", "application/json")
 
-		err = baseSend(req, metric, true)
-		if err != nil {
-			continue
-		}
+	err = baseSend(req, true)
+	if err != nil {
+		return
 	}
 }
 
-func baseSend(req *http.Request, metric domain.MetricInterface, enableCompression bool) error {
+func baseSend(req *http.Request, enableCompression bool) error {
 	if enableCompression {
 		var buf bytes.Buffer
 		gz := gzip.NewWriter(&buf)
@@ -94,13 +96,9 @@ func baseSend(req *http.Request, metric domain.MetricInterface, enableCompressio
 
 	// Обработка ответа
 	if resp.StatusCode == http.StatusOK {
-		if metric.GetType() == domain.MetricTypeCounter {
-			val := metric.GetValue().(*int64)
-			fmt.Println("MetricInterface sent successfully:", metric.GetName(), "Value:", *val)
-		}
-
+		fmt.Println("MetricInterface sent successfully")
 	} else {
-		fmt.Printf("Failed to send metric %s: %s\n", metric.GetName(), resp.Status)
+		fmt.Printf("Failed to send metric")
 	}
 
 	return nil

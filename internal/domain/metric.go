@@ -14,12 +14,16 @@ func NewMetrics() *Metrics {
 }
 
 type MetricInterface interface {
-	GetValue() interface{}
-	GetName() string
-	GetType() string
+	MetricViewInterface
 	SetValue(value interface{}) MetricInterface
 	SetName(name string) MetricInterface
 	SetType(mtype string) MetricInterface
+}
+
+type MetricViewInterface interface {
+	GetValue() interface{}
+	GetName() string
+	GetType() string
 }
 
 type Metric struct {
