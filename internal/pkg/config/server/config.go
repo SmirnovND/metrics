@@ -8,7 +8,7 @@ import (
 	"time"
 )
 
-const DefaultStoreInterval = 10
+const DefaultStoreInterval = 300
 
 type Config struct {
 	StoreInterval   int
