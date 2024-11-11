@@ -18,6 +18,7 @@ func Handler(storage *repo.MemStorage, db *sqlx.DB) http.Handler {
 	r.Use(middleware.StripSlashes)
 	r.Post("/update/{type}/{name}/{value}", metricController.HandleUpdate)
 	r.Post("/update", metricController.HandleUpdateJSON)
+	r.Post("/updates", metricController.HandleUpdatesJSON)
 	r.Get("/value/{type}/{name}", metricController.HandleValue)
 	r.Post("/value/{type}/{name}", metricController.HandleValueJSON)
 	r.Post("/value", metricController.HandleValueJSON)
