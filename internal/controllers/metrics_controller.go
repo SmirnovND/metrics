@@ -1,11 +1,9 @@
 package controllers
 
 import (
-	"encoding/json"
 	"github.com/SmirnovND/metrics/internal/pkg/paramsparser"
 	"github.com/SmirnovND/metrics/internal/services/server"
 	serverSaver "github.com/SmirnovND/metrics/internal/usecase/server"
-	"github.com/go-chi/chi/v5"
 	"net/http"
 )
 
@@ -60,10 +58,12 @@ func (mc *MetricsController) HandleUpdatesJSON(w http.ResponseWriter, r *http.Re
 }
 
 func (mc *MetricsController) HandleValue(w http.ResponseWriter, r *http.Request) {
-	// Получение параметров из URL
-	metricType := chi.URLParam(r, "type")
-	metricName := chi.URLParam(r, "name")
-	metricValue, err := mc.ServiceCollector.GetMetricValue(metricName, metricType)
+	parseMetric, err := paramsparser.QueryParseMetric(w, r)
+	if err != nil {
+		return
+	}
+
+	metricValue, err := mc.ServiceCollector.GetMetricValue(parseMetric.GetName(), parseMetric.GetType())
 	if err != nil {
 		http.Error(w, "Not found metric", http.StatusNotFound)
 		return
@@ -73,19 +73,13 @@ func (mc *MetricsController) HandleValue(w http.ResponseWriter, r *http.Request)
 }
 
 func (mc *MetricsController) HandleValueQueryParamsJSON(w http.ResponseWriter, r *http.Request) {
-	// Получение параметров из URL
-	metricType := chi.URLParam(r, "type")
-	metricName := chi.URLParam(r, "name")
-
-	metricResponse, err := mc.ServiceCollector.FindMetric(metricName, metricType)
+	parseMetric, err := paramsparser.QueryParseMetric(w, r)
 	if err != nil {
-		http.Error(w, "Not found metric", http.StatusNotFound)
 		return
 	}
 
-	JSONResponse, err := json.Marshal(metricResponse)
+	JSONResponse, err := serverSaver.FindAndResponseAsJSON(parseMetric, mc.ServiceCollector, w)
 	if err != nil {
-		http.Error(w, "Failed to marshal metric to JSON", http.StatusInternalServerError)
 		return
 	}
 
