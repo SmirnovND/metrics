@@ -35,12 +35,12 @@ func SaveAndFindArr(
 		metricsResponse = append(metricsResponse, metricResponse.(*domain.Metric))
 	}
 
-	jsonResponse, err := json.Marshal(metricsResponse)
+	JSONResponse, err := json.Marshal(metricsResponse)
 	if err != nil {
 		http.Error(w, "Failed to marshal metric to JSON", http.StatusInternalServerError)
 		return nil, fmt.Errorf("failed to marshal metric to JSON")
 	}
-	return jsonResponse, nil
+	return JSONResponse, nil
 }
 
 func FindAndResponseAsJSON(
@@ -53,7 +53,7 @@ func FindAndResponseAsJSON(
 		return nil, err
 	}
 
-	return JsonResponse(metricResponse, w)
+	return JSONResponse(metricResponse, w)
 }
 
 func Find(
@@ -70,12 +70,12 @@ func Find(
 	return metricResponse, nil
 }
 
-func JsonResponse(data interface{}, w http.ResponseWriter) ([]byte, error) {
-	jsonResponse, err := json.Marshal(data)
+func JSONResponse(data interface{}, w http.ResponseWriter) ([]byte, error) {
+	JSONResponse, err := json.Marshal(data)
 	if err != nil {
 		http.Error(w, "Failed to marshal metric to JSON", http.StatusInternalServerError)
 		return nil, fmt.Errorf("failed to marshal metric to JSON")
 	}
 
-	return jsonResponse, nil
+	return JSONResponse, nil
 }

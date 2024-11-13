@@ -35,13 +35,13 @@ func (mc *MetricsController) HandleUpdateJSON(w http.ResponseWriter, r *http.Req
 		return
 	}
 
-	jsonResponse, err := serverSaver.SaveAndFind(parseMetric, mc.ServiceCollector, w)
+	JSONResponse, err := serverSaver.SaveAndFind(parseMetric, mc.ServiceCollector, w)
 	if err != nil {
 		return
 	}
 
 	w.Header().Set("Content-Type", "application/json")
-	w.Write(jsonResponse)
+	w.Write(JSONResponse)
 }
 
 func (mc *MetricsController) HandleUpdatesJSON(w http.ResponseWriter, r *http.Request) {
@@ -50,13 +50,13 @@ func (mc *MetricsController) HandleUpdatesJSON(w http.ResponseWriter, r *http.Re
 		return
 	}
 
-	jsonResponse, err := serverSaver.SaveAndFindArr(parseMetrics, mc.ServiceCollector, w)
+	JSONResponse, err := serverSaver.SaveAndFindArr(parseMetrics, mc.ServiceCollector, w)
 	if err != nil {
 		return
 	}
 
 	w.Header().Set("Content-Type", "application/json")
-	w.Write(jsonResponse)
+	w.Write(JSONResponse)
 }
 
 func (mc *MetricsController) HandleValue(w http.ResponseWriter, r *http.Request) {
@@ -83,14 +83,14 @@ func (mc *MetricsController) HandleValueQueryParamsJSON(w http.ResponseWriter, r
 		return
 	}
 
-	jsonResponse, err := json.Marshal(metricResponse)
+	JSONResponse, err := json.Marshal(metricResponse)
 	if err != nil {
 		http.Error(w, "Failed to marshal metric to JSON", http.StatusInternalServerError)
 		return
 	}
 
 	w.Header().Set("Content-Type", "application/json")
-	w.Write(jsonResponse)
+	w.Write(JSONResponse)
 }
 
 func (mc *MetricsController) HandleRoot(w http.ResponseWriter, r *http.Request) {
@@ -104,11 +104,11 @@ func (mc *MetricsController) HandleValueJSON(w http.ResponseWriter, r *http.Requ
 		return
 	}
 
-	jsonResponse, err := serverSaver.FindAndResponseAsJSON(parseMetric, mc.ServiceCollector, w)
+	JSONResponse, err := serverSaver.FindAndResponseAsJSON(parseMetric, mc.ServiceCollector, w)
 	if err != nil {
 		return
 	}
 
 	w.Header().Set("Content-Type", "application/json")
-	w.Write(jsonResponse)
+	w.Write(JSONResponse)
 }
