@@ -11,20 +11,25 @@ import (
 	"go.uber.org/dig"
 )
 
+type Option func(*Container)
+
+func WithStartCollectionFunc(f func(cf interfaces.ConfigServer, db *sqlx.DB) map[string]domain.MetricInterface) Option {
+	return func(c *Container) {
+		c.startCollectionFunc = f
+	}
+}
+
 // Container - структура контейнера, обертывающая dig-контейнер
 type Container struct {
 	container           *dig.Container
 	startCollectionFunc func(cf interfaces.ConfigServer, db *sqlx.DB) map[string]domain.MetricInterface
 }
 
-// NewContainer - создаёт новый DI-контейнер и регистрирует зависимости
-func NewContainer(startCollectionFunc func(cf interfaces.ConfigServer, db *sqlx.DB) map[string]domain.MetricInterface) *Container {
-	c := &Container{
-		container:           dig.New(),
-		startCollectionFunc: startCollectionFunc,
+func NewContainer(opts ...Option) *Container {
+	c := &Container{container: dig.New()}
+	for _, opt := range opts {
+		opt(c)
 	}
-
-	c.provideDependencies()
 	return c
 }
 

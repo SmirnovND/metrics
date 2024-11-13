@@ -2,11 +2,11 @@ package controllers
 
 import (
 	"encoding/json"
-	"github.com/SmirnovND/metrics/internal/domain"
+	"github.com/SmirnovND/metrics/internal/pkg/paramsparser"
 	"github.com/SmirnovND/metrics/internal/services/server"
+	serverSaver "github.com/SmirnovND/metrics/internal/usecase/server"
 	"github.com/go-chi/chi/v5"
 	"net/http"
-	"strconv"
 )
 
 type MetricsController struct {
@@ -20,95 +20,38 @@ func NewMetricsController(serviceCollector *server.ServiceCollector) *MetricsCon
 }
 
 func (mc *MetricsController) HandleUpdate(w http.ResponseWriter, r *http.Request) {
-
-	// Получение параметров из URL
-	metricType := chi.URLParam(r, "type")
-	metricName := chi.URLParam(r, "name")
-	metricValue := chi.URLParam(r, "value")
-
-	if metricType == "" {
-		http.Error(w, "Invalid URL format", http.StatusNotFound)
+	parseMetric, err := paramsparser.QueryParseMetric(w, r)
+	if err != nil {
 		return
 	}
 
-	var metric domain.MetricInterface
-	if metricType == domain.MetricTypeGauge {
-		floatValue, err := strconv.ParseFloat(metricValue, 64)
-		if err != nil {
-			http.Error(w, "Invalid Value format", http.StatusBadRequest)
-			return
-		}
-		metric = (&domain.Gauge{}).SetType(domain.MetricTypeGauge).SetName(metricName).SetValue(&floatValue)
-	} else if metricType == domain.MetricTypeCounter {
-		intValue, err := strconv.ParseInt(metricValue, 10, 64)
-		if err != nil {
-			http.Error(w, "Invalid Value format", http.StatusBadRequest)
-			return
-		}
-		metric = (&domain.Counter{}).SetType(domain.MetricTypeCounter).SetName(metricName).SetValue(&intValue)
-	} else {
-		http.Error(w, "Invalid URL format", http.StatusBadRequest)
-		return
-	}
-
-	mc.ServiceCollector.SaveMetric(metric)
-
+	mc.ServiceCollector.SaveMetric(parseMetric)
 	w.WriteHeader(http.StatusOK)
 }
 
 func (mc *MetricsController) HandleUpdateJSON(w http.ResponseWriter, r *http.Request) {
-
-	var metric *domain.Metric
-	decoder := json.NewDecoder(r.Body)
-	err := decoder.Decode(&metric)
+	parseMetric, err := paramsparser.JSONParseMetric(w, r)
 	if err != nil {
-		http.Error(w, "Error decode:"+err.Error(), http.StatusBadRequest)
 		return
 	}
 
-	mc.ServiceCollector.SaveMetric(metric)
-
-	metricResponse, err := mc.ServiceCollector.FindMetric(metric.GetName(), metric.GetType())
+	jsonResponse, err := serverSaver.SaveAndFind(parseMetric, mc.ServiceCollector, w)
 	if err != nil {
-		http.Error(w, "Not found metric", http.StatusNotFound)
-		return
-	}
-
-	jsonResponse, err := json.Marshal(metricResponse)
-	if err != nil {
-		http.Error(w, "Failed to marshal metric to JSON", http.StatusInternalServerError)
 		return
 	}
 
 	w.Header().Set("Content-Type", "application/json")
 	w.Write(jsonResponse)
 }
-func (mc *MetricsController) HandleUpdatesJSON(w http.ResponseWriter, r *http.Request) {
 
-	var metrics []*domain.Metric
-	var metricsResponse []*domain.Metric
-	decoder := json.NewDecoder(r.Body)
-	err := decoder.Decode(&metrics)
+func (mc *MetricsController) HandleUpdatesJSON(w http.ResponseWriter, r *http.Request) {
+	parseMetrics, err := paramsparser.JSONParseMetrics(w, r)
 	if err != nil {
-		http.Error(w, "Error decode:"+err.Error(), http.StatusBadRequest)
 		return
 	}
 
-	for _, metric := range metrics {
-		mc.ServiceCollector.SaveMetric(metric)
-
-		metricResponse, err := mc.ServiceCollector.FindMetric(metric.GetName(), metric.GetType())
-		if err != nil {
-			http.Error(w, "Not found metric", http.StatusNotFound)
-			return
-		}
-
-		metricsResponse = append(metricsResponse, metricResponse.(*domain.Metric))
-	}
-	
-	jsonResponse, err := json.Marshal(metricsResponse)
+	jsonResponse, err := serverSaver.SaveAndFindArr(parseMetrics, mc.ServiceCollector, w)
 	if err != nil {
-		http.Error(w, "Failed to marshal metric to JSON", http.StatusInternalServerError)
 		return
 	}
 
@@ -156,26 +99,13 @@ func (mc *MetricsController) HandleRoot(w http.ResponseWriter, r *http.Request) 
 }
 
 func (mc *MetricsController) HandleValueJSON(w http.ResponseWriter, r *http.Request) {
-	var metric *domain.Metric
-	decoder := json.NewDecoder(r.Body)
-	err := decoder.Decode(&metric)
+	parseMetric, err := paramsparser.JSONParseMetric(w, r)
 	if err != nil {
-		metric = &domain.Metric{}
-		metric.SetName(chi.URLParam(r, "name"))
-		metric.SetType(chi.URLParam(r, "type"))
-		//http.Error(w, "Error decode:"+err.Error(), http.StatusBadRequest)
-		//return
-	}
-
-	metricResponse, err := mc.ServiceCollector.FindMetric(metric.GetName(), metric.GetType())
-	if err != nil {
-		http.Error(w, "Not found metric", http.StatusNotFound)
 		return
 	}
 
-	jsonResponse, err := json.Marshal(metricResponse)
+	jsonResponse, err := serverSaver.FindAndResponseAsJSON(parseMetric, mc.ServiceCollector, w)
 	if err != nil {
-		http.Error(w, "Failed to marshal metric to JSON", http.StatusInternalServerError)
 		return
 	}
 

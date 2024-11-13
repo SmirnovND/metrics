@@ -21,7 +21,7 @@ func main() {
 
 func Run() error {
 
-	diContainer := container.NewContainer(usecase.RestoreBackup)
+	diContainer := container.NewContainer(container.WithStartCollectionFunc(usecase.RestoreBackup))
 
 	var cf interfaces.ConfigServer
 	var storage *repo.MemStorage
