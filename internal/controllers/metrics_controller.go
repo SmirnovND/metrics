@@ -18,7 +18,7 @@ func NewMetricsController(serviceCollector *server.ServiceCollector) *MetricsCon
 }
 
 func (mc *MetricsController) HandleUpdate(w http.ResponseWriter, r *http.Request) {
-	parseMetric, err := paramsparser.QueryParseMetric(w, r)
+	parseMetric, err := paramsparser.QueryParseMetricAndValue(w, r)
 	if err != nil {
 		return
 	}
