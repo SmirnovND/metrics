@@ -8,11 +8,14 @@ import (
 	"time"
 )
 
+const DefaultStoreInterval = 300
+
 type Config struct {
 	StoreInterval   int
 	FileStoragePath string
 	Restore         bool
 	FlagRunAddr     string
+	DBDsn           string
 }
 
 func (c *Config) GetStoreInterval() time.Duration {
@@ -31,10 +34,15 @@ func (c *Config) GetFlagRunAddr() string {
 	return c.FlagRunAddr
 }
 
+func (c *Config) GetDBDsn() string {
+	return c.DBDsn
+}
+
 func NewConfigCommand() (cf interfaces.ConfigServer) {
 	config := new(Config)
 
-	flag.IntVar(&config.StoreInterval, "i", 300, "")
+	flag.IntVar(&config.StoreInterval, "i", DefaultStoreInterval, "")
+	flag.StringVar(&config.DBDsn, "d", "", "db dsn")
 	flag.StringVar(&config.FileStoragePath, "f", "./internal/resource/storage.json", "file storage path")
 	flag.BoolVar(&config.Restore, "r", true, "Restore")
 	flag.StringVar(&config.FlagRunAddr, "a", "localhost:8080", "address and port to run server")
@@ -50,6 +58,10 @@ func NewConfigCommand() (cf interfaces.ConfigServer) {
 
 	if FileStoragePath := os.Getenv("FILE_STORAGE_PATH"); FileStoragePath != "" {
 		config.FileStoragePath = FileStoragePath
+	}
+
+	if Dsn := os.Getenv("DATABASE_DSN"); Dsn != "" {
+		config.DBDsn = Dsn
 	}
 
 	if Restore := os.Getenv("RESTORE"); Restore != "" {
