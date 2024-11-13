@@ -27,6 +27,7 @@ type Container struct {
 
 func NewContainer(opts ...Option) *Container {
 	c := &Container{container: dig.New()}
+	c.provideDependencies()
 	for _, opt := range opts {
 		opt(c)
 	}
