@@ -42,12 +42,12 @@ func Run() error {
 		router.Handler(storage, db),
 		loggeer.WithLogging,
 		compressor.WithDecompression,
-		func(next http.Handler) http.Handler {
-			return crypto.WithHashMiddleware(cf, next) // Передаём конфиг в middleware
-		},
 		compressor.WithCompression,
 		func(next http.Handler) http.Handler {
 			return crypto.WithCryptoKey(cf, next) // Передаём конфиг в middleware
+		},
+		func(next http.Handler) http.Handler {
+			return crypto.WithHashMiddleware(cf, next) // Передаём конфиг в middleware
 		},
 	))
 }
