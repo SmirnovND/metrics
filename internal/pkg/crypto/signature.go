@@ -5,6 +5,7 @@ import (
 	"crypto/hmac"
 	"crypto/sha256"
 	"encoding/hex"
+	"fmt"
 	"github.com/SmirnovND/metrics/internal/interfaces"
 	"io"
 	"net/http"
@@ -68,6 +69,7 @@ func WithCryptoKey(config interfaces.ConfigServer, next http.Handler) http.Handl
 
 		hash := r.Header.Get("HashSHA256")
 		if hash == "" {
+			fmt.Println("__________________________Missing HashSHA256 header____________________________")
 			http.Error(w, "Missing HashSHA256 header", http.StatusBadRequest)
 			return
 		}
@@ -85,6 +87,7 @@ func WithCryptoKey(config interfaces.ConfigServer, next http.Handler) http.Handl
 		// Проверяем хэш
 		computedHash := calculateHash(body, config.GetKey())
 		if hash != computedHash {
+			fmt.Println("__________________________Invalid HashSHA256____________________________")
 			http.Error(w, "Invalid HashSHA256", http.StatusBadRequest)
 			return
 		}

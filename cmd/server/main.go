@@ -44,10 +44,10 @@ func Run() error {
 		compressor.WithDecompression,
 		compressor.WithCompression,
 		func(next http.Handler) http.Handler {
-			return crypto.WithCryptoKey(cf, next) // Передаём конфиг в middleware
+			return crypto.WithCryptoKey(cf, next)
 		},
 		func(next http.Handler) http.Handler {
-			return crypto.WithHashMiddleware(cf, next) // Передаём конфиг в middleware
+			return crypto.WithHashMiddleware(cf, next)
 		},
 	))
 }
