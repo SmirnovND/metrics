@@ -8,10 +8,16 @@ import (
 	"strconv"
 )
 
+const (
+	reportInterval = 10
+	pollInterval   = 2
+)
+
 type Config struct {
 	ReportInterval int    `yaml:"reportInterval"`
 	PollInterval   int    `yaml:"pollInterval"`
 	ServerHost     string `yaml:"serverHost"`
+	Key            string `yaml:"key"`
 }
 
 func (c *Config) GetReportInterval() int {
@@ -25,13 +31,17 @@ func (c *Config) GetPollInterval() int {
 func (c *Config) GetServerHost() string {
 	return c.ServerHost
 }
+func (c *Config) GetKey() string {
+	return c.Key
+}
 
 func NewConfigCommand() (cf interfaces.ConfigAgent) {
 	config := new(Config)
 
 	flag.StringVar(&config.ServerHost, "a", "localhost:8080", "address and port to run server")
-	flag.IntVar(&config.ReportInterval, "r", 10, "report interval")
-	flag.IntVar(&config.PollInterval, "p", 2, "poll interval")
+	flag.IntVar(&config.ReportInterval, "r", reportInterval, "report interval")
+	flag.IntVar(&config.PollInterval, "p", pollInterval, "poll interval")
+	flag.StringVar(&config.Key, "k", "", "key")
 
 	flag.Parse()
 
@@ -51,6 +61,10 @@ func NewConfigCommand() (cf interfaces.ConfigAgent) {
 		if err == nil {
 			config.PollInterval = envPollInterval
 		}
+	}
+
+	if envKey := os.Getenv("KEY"); envKey != "" {
+		config.Key = envKey
 	}
 
 	config.ServerHost = fmt.Sprintf("http://%s", config.ServerHost)
