@@ -8,4 +8,5 @@ type ConfigServer interface {
 	IsRestore() bool
 	GetFlagRunAddr() string
 	GetDBDsn() string
+	GetKey() string
 }
