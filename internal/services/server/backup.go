@@ -1,30 +1,50 @@
 package server
 
 import (
+	"database/sql"
 	"encoding/json"
 	"fmt"
 	"github.com/SmirnovND/metrics/internal/domain"
 	"github.com/SmirnovND/metrics/internal/interfaces"
 	"github.com/SmirnovND/metrics/internal/repo"
+	"github.com/jmoiron/sqlx"
+	"github.com/rs/zerolog/log"
 	"os"
 )
 
 type ServiceBackup struct {
 	storage *repo.MemStorage
 	cf      interfaces.ConfigServer
+	db      *sqlx.DB
 }
 
-func NewServiceBackup(storage *repo.MemStorage, cf interfaces.ConfigServer) *ServiceBackup {
+func NewServiceBackup(storage *repo.MemStorage, cf interfaces.ConfigServer, db *sqlx.DB) *ServiceBackup {
 	return &ServiceBackup{
 		storage: storage,
 		cf:      cf,
+		db:      db,
 	}
 }
 
 func (s *ServiceBackup) Backup() {
+	err := s.db.Ping()
+	if err != nil {
+		log.Info().
+			Err(err).
+			Msg("Ошибка соединения с базой ")
+		s.backupToFile()
+		return
+	} else {
+		s.backupToDB()
+	}
+}
+
+func (s *ServiceBackup) backupToFile() {
 	file, err := os.Create(s.cf.GetFileStoragePath())
 	if err != nil {
-		fmt.Println("Error Backup:", err)
+		log.Info().
+			Err(err).
+			Msg("Ошибка backupToFile ")
 		return
 	}
 	defer file.Close()
@@ -32,13 +52,88 @@ func (s *ServiceBackup) Backup() {
 		encoder := json.NewEncoder(file)
 		err = encoder.Encode(collection)
 		if err != nil {
-			fmt.Println("Error Backup:", err)
+			log.Info().
+				Err(err).
+				Msg("Ошибка backupToFile ")
 			return
 		}
 	})
 }
 
-func RestoreFromFile(filename string, restore bool) map[string]domain.MetricInterface {
+func (s *ServiceBackup) backupToDB() {
+	tx, err := s.db.Begin()
+	if err != nil {
+		log.Info().
+			Err(err).
+			Msg("Ошибка старта транзакции ")
+		return
+	}
+
+	_, err = tx.Exec("DELETE FROM metric")
+	if err != nil {
+		tx.Rollback()
+		log.Info().
+			Err(err).
+			Msg("Ошибка очистки таблицы ")
+		return
+	}
+
+	s.storage.ExecuteWithLock(func(collection map[string]domain.MetricInterface) {
+		stmt, err := tx.Prepare("INSERT INTO metric (id, type, value, delta) VALUES ($1, $2, $3, $4) ON CONFLICT (id) DO UPDATE SET type = EXCLUDED.type, value = EXCLUDED.value, delta = EXCLUDED.delta")
+		if err != nil {
+			log.Info().
+				Err(err).
+				Msg("Ошибка подготовки запроса ")
+			tx.Rollback()
+			return
+		}
+		defer stmt.Close()
+
+		for _, metricInterface := range collection {
+			metric := metricInterface.(*domain.Metric)
+			var delta sql.NullInt64
+			var value sql.NullFloat64
+
+			if metric.Delta != nil {
+				delta = sql.NullInt64{Int64: *metric.Delta, Valid: true}
+			}
+			if metric.Value != nil {
+				value = sql.NullFloat64{Float64: *metric.Value, Valid: true}
+			}
+
+			_, err := stmt.Exec(metric.ID, metric.MType, value, delta)
+			if err != nil {
+				log.Info().
+					Err(err).
+					Msg("Ошибка вставки ")
+				tx.Rollback()
+				return
+			}
+		}
+
+		err = tx.Commit()
+		if err != nil {
+			log.Info().
+				Err(err).
+				Msg("Ошибка комита транщакции ")
+		} else {
+			log.Info().
+				Err(err).
+				Msg("Метрики сохранены ")
+		}
+	})
+}
+
+func RestoreMetric(cf interfaces.ConfigServer, db *sqlx.DB) map[string]domain.MetricInterface {
+	err := db.Ping()
+	if err != nil {
+		return restoreFromFile(cf.GetFileStoragePath(), cf.IsRestore())
+	} else {
+		return restoreFromDB(db)
+	}
+}
+
+func restoreFromFile(filename string, restore bool) map[string]domain.MetricInterface {
 	newCollection := make(map[string]*domain.Metric)
 
 	if !restore {
@@ -63,4 +158,51 @@ func RestoreFromFile(filename string, restore bool) map[string]domain.MetricInte
 	}
 
 	return result
+}
+
+func restoreFromDB(db *sqlx.DB) map[string]domain.MetricInterface {
+	rows, err := db.Query("SELECT id, type, value, delta FROM metric")
+	if err != nil {
+		fmt.Println("Error querying database:", err)
+		return make(map[string]domain.MetricInterface)
+	}
+	defer rows.Close()
+
+	collection := make(map[string]domain.MetricInterface)
+
+	for rows.Next() {
+		var (
+			id    string
+			mtype string
+			delta sql.NullInt64
+			value sql.NullFloat64
+		)
+
+		if err := rows.Scan(&id, &mtype, &value, &delta); err != nil {
+			fmt.Println("Error scanning row:", err)
+			continue
+		}
+
+		metric := &domain.Metric{
+			ID:    id,
+			MType: mtype,
+		}
+
+		if delta.Valid {
+			deltaValue := delta.Int64
+			metric.Delta = &deltaValue
+		}
+		if value.Valid {
+			valueValue := value.Float64
+			metric.Value = &valueValue
+		}
+
+		collection[id] = metric
+	}
+
+	if err := rows.Err(); err != nil {
+		fmt.Println("Error with rows:", err)
+	}
+
+	return collection
 }
