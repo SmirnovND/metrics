@@ -11,6 +11,7 @@ import (
 const (
 	reportInterval = 10
 	pollInterval   = 2
+	rateLimit      = 1
 )
 
 type Config struct {
@@ -18,6 +19,7 @@ type Config struct {
 	PollInterval   int    `yaml:"pollInterval"`
 	ServerHost     string `yaml:"serverHost"`
 	Key            string `yaml:"key"`
+	RateLimit      int    `yaml:"rateLimit"`
 }
 
 func (c *Config) GetReportInterval() int {
@@ -34,6 +36,9 @@ func (c *Config) GetServerHost() string {
 func (c *Config) GetKey() string {
 	return c.Key
 }
+func (c *Config) GetRateLimit() int {
+	return c.RateLimit
+}
 
 func NewConfigCommand() (cf interfaces.ConfigAgent) {
 	config := new(Config)
@@ -42,6 +47,7 @@ func NewConfigCommand() (cf interfaces.ConfigAgent) {
 	flag.IntVar(&config.ReportInterval, "r", reportInterval, "report interval")
 	flag.IntVar(&config.PollInterval, "p", pollInterval, "poll interval")
 	flag.StringVar(&config.Key, "k", "", "key")
+	flag.IntVar(&config.RateLimit, "l", rateLimit, "rateLimit")
 
 	flag.Parse()
 
@@ -65,6 +71,13 @@ func NewConfigCommand() (cf interfaces.ConfigAgent) {
 
 	if envKey := os.Getenv("KEY"); envKey != "" {
 		config.Key = envKey
+	}
+
+	if envRateLimit := os.Getenv("RATE_LIMIT"); envRateLimit != "" {
+		envRateLimit, err := strconv.Atoi(envRateLimit)
+		if err == nil {
+			config.RateLimit = envRateLimit
+		}
 	}
 
 	config.ServerHost = fmt.Sprintf("http://%s", config.ServerHost)

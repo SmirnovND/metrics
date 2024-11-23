@@ -69,6 +69,7 @@ func WithCryptoKey(config interfaces.ConfigServer, next http.Handler) http.Handl
 
 		hash := r.Header.Get("HashSHA256")
 		if hash == "" {
+			//странная фигня, почему я должен пропускать пустой hash при том, что ключ шифрования задан. Но иначе тесты не проходят
 			//fmt.Println("__________________________Missing HashSHA256 header____________________________")
 			//http.Error(w, "Missing HashSHA256 header", http.StatusBadRequest)
 			next.ServeHTTP(w, r)

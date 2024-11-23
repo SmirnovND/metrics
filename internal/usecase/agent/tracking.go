@@ -15,7 +15,13 @@ func MetricsTracking(cf interfaces.ConfigAgent) {
 
 	go func() {
 		for range updateTicker.C {
-			agent.Update(metrics) // Обновляем метрики
+			agent.Update(metrics, agent.BaseMetric) // Обновляем метрики
+		}
+	}()
+
+	go func() {
+		for range updateTicker.C {
+			agent.Update(metrics, agent.AdvancedMetricsDefinitions) // Обновляем метрики
 		}
 	}()
 
