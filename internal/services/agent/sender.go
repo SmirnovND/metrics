@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/SmirnovND/metrics/internal/domain"
+	"github.com/SmirnovND/metrics/internal/pkg/crypto"
 	"io"
 	"net/http"
 )
@@ -35,7 +36,7 @@ func Send(m *domain.Metrics, serverHost string) {
 }
 
 // SendJSON Метод для отправки метрик
-func SendJSON(m *domain.Metrics, serverHost string) {
+func SendJSON(m *domain.Metrics, serverHost string, key string) {
 	m.Mu.RLock()         // Блокируем доступ к мапе
 	defer m.Mu.RUnlock() // Освобождаем доступ после обновления
 	var metrics []*domain.Metric
@@ -58,7 +59,7 @@ func SendJSON(m *domain.Metrics, serverHost string) {
 		fmt.Println("Error creating request:", err)
 		return
 	}
-
+	crypto.SetSignature(req, jsonData, key)
 	req.Header.Set("Content-Type", "application/json")
 
 	err = baseSend(req, true)

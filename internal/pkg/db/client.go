@@ -10,6 +10,16 @@ import (
 	"github.com/rs/zerolog/log"
 )
 
+const (
+	maxIdleConnections = 10
+	maxOpenConnections = 100
+)
+
+func ConfigureDB(db *sqlx.DB) {
+	db.SetMaxIdleConns(maxIdleConnections)
+	db.SetMaxOpenConns(maxOpenConnections)
+}
+
 func NewDB(c interfaces.ConfigServer) *sqlx.DB {
 	dsn := c.GetDBDsn()
 	if c.GetDBDsn() == "" {
@@ -25,9 +35,7 @@ func NewDB(c interfaces.ConfigServer) *sqlx.DB {
 		return db
 	}
 
-	db.SetMaxIdleConns(10)
-	db.SetMaxOpenConns(50)
-
+	ConfigureDB(db)
 	fmt.Println("DB connection success!")
 
 	err = db.Ping()

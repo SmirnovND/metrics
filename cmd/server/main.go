@@ -5,6 +5,7 @@ import (
 	"github.com/SmirnovND/metrics/internal/middleware"
 	"github.com/SmirnovND/metrics/internal/pkg/compressor"
 	"github.com/SmirnovND/metrics/internal/pkg/container"
+	"github.com/SmirnovND/metrics/internal/pkg/crypto"
 	"github.com/SmirnovND/metrics/internal/pkg/loggeer"
 	"github.com/SmirnovND/metrics/internal/repo"
 	"github.com/SmirnovND/metrics/internal/router"
@@ -21,7 +22,7 @@ func main() {
 
 func Run() error {
 
-	diContainer := container.NewContainer(usecase.RestoreBackup)
+	diContainer := container.NewContainer(container.WithStartCollectionFunc(usecase.RestoreBackup))
 
 	var cf interfaces.ConfigServer
 	var storage *repo.MemStorage
@@ -42,5 +43,11 @@ func Run() error {
 		loggeer.WithLogging,
 		compressor.WithDecompression,
 		compressor.WithCompression,
+		func(next http.Handler) http.Handler {
+			return crypto.WithCryptoKey(cf, next)
+		},
+		func(next http.Handler) http.Handler {
+			return crypto.WithHashMiddleware(cf, next)
+		},
 	))
 }
