@@ -16,6 +16,7 @@ type Config struct {
 	Restore         bool
 	FlagRunAddr     string
 	DBDsn           string
+	Key             string
 }
 
 func (c *Config) GetStoreInterval() time.Duration {
@@ -37,6 +38,9 @@ func (c *Config) GetFlagRunAddr() string {
 func (c *Config) GetDBDsn() string {
 	return c.DBDsn
 }
+func (c *Config) GetKey() string {
+	return c.Key
+}
 
 func NewConfigCommand() (cf interfaces.ConfigServer) {
 	config := new(Config)
@@ -46,6 +50,7 @@ func NewConfigCommand() (cf interfaces.ConfigServer) {
 	flag.StringVar(&config.FileStoragePath, "f", "./internal/resource/storage.json", "file storage path")
 	flag.BoolVar(&config.Restore, "r", true, "Restore")
 	flag.StringVar(&config.FlagRunAddr, "a", "localhost:8080", "address and port to run server")
+	flag.StringVar(&config.Key, "k", "", "key")
 
 	flag.Parse()
 
@@ -73,6 +78,10 @@ func NewConfigCommand() (cf interfaces.ConfigServer) {
 
 	if envRunAddr := os.Getenv("ADDRESS"); envRunAddr != "" {
 		config.FlagRunAddr = envRunAddr
+	}
+
+	if envKey := os.Getenv("KEY"); envKey != "" {
+		config.Key = envKey
 	}
 
 	return config

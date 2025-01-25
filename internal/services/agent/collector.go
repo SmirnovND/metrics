@@ -2,15 +2,20 @@ package agent
 
 import (
 	"github.com/SmirnovND/metrics/internal/domain"
+	"github.com/shirou/gopsutil/v3/cpu"
+	"github.com/shirou/gopsutil/v3/mem"
 	"math/rand"
 	"runtime"
 	"runtime/debug"
+	"time"
 )
 
-var metricDefinitions = map[string]struct {
+type MetricDefinitions map[string]struct {
 	Type   string
 	Update func(rtm *runtime.MemStats) interface{}
-}{
+}
+
+var BaseMetric = MetricDefinitions{
 	"Alloc":         {domain.MetricTypeGauge, func(rtm *runtime.MemStats) interface{} { return float64(rtm.Alloc) }},
 	"BuckHashSys":   {domain.MetricTypeGauge, func(rtm *runtime.MemStats) interface{} { return float64(rtm.BuckHashSys) }},
 	"Frees":         {domain.MetricTypeGauge, func(rtm *runtime.MemStats) interface{} { return float64(rtm.Frees) }},
@@ -40,7 +45,22 @@ var metricDefinitions = map[string]struct {
 	"TotalAlloc":    {domain.MetricTypeGauge, func(rtm *runtime.MemStats) interface{} { return float64(rtm.TotalAlloc) }},
 }
 
-func Update(m *domain.Metrics) {
+var AdvancedMetricsDefinitions = MetricDefinitions{
+	"TotalMemory": {domain.MetricTypeGauge, func(rtm *runtime.MemStats) interface{} {
+		vmStat, _ := mem.VirtualMemory()
+		return float64(vmStat.Total)
+	}},
+	"FreeMemory": {domain.MetricTypeGauge, func(rtm *runtime.MemStats) interface{} {
+		vmStat, _ := mem.VirtualMemory()
+		return float64(vmStat.Free)
+	}},
+	"CPUutilization1": {domain.MetricTypeGauge, func(rtm *runtime.MemStats) interface{} {
+		cpuUtilization, _ := cpu.Percent(1*time.Second, false)
+		return cpuUtilization
+	}},
+}
+
+func Update(m *domain.Metrics, metrics MetricDefinitions) {
 	var rtm runtime.MemStats
 	runtime.ReadMemStats(&rtm)
 
@@ -51,7 +71,7 @@ func Update(m *domain.Metrics) {
 	debug.SetGCPercent(100)
 
 	// Проходим по метрикам и обновляем значения
-	for name, def := range metricDefinitions {
+	for name, def := range metrics {
 
 		value := def.Update(&rtm)
 
