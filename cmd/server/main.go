@@ -12,6 +12,7 @@ import (
 	usecase "github.com/SmirnovND/metrics/internal/usecase/server"
 	"github.com/jmoiron/sqlx"
 	"net/http"
+	_ "net/http/pprof"
 )
 
 func main() {
