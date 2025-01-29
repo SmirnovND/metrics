@@ -8,6 +8,7 @@ import (
 	"net/http"
 )
 
+// SaveAndFind сохраняет переданную метрику и возвращает её в виде JSON-ответа.
 func SaveAndFind(
 	parseMetric domain.MetricInterface,
 	ServiceCollector *server.ServiceCollector,
@@ -17,6 +18,7 @@ func SaveAndFind(
 	return FindAndResponseAsJSON(parseMetric, ServiceCollector, w)
 }
 
+// SaveAndFindArr сохраняет массив метрик и возвращает их обновленные значения в JSON-формате.
 func SaveAndFindArr(
 	parseMetrics []*domain.Metric,
 	ServiceCollector *server.ServiceCollector,
@@ -43,6 +45,7 @@ func SaveAndFindArr(
 	return JSONResponse, nil
 }
 
+// FindAndResponseAsJSON выполняет поиск метрики и возвращает результат в формате JSON.
 func FindAndResponseAsJSON(
 	parseMetric domain.MetricInterface,
 	ServiceCollector *server.ServiceCollector,
@@ -56,6 +59,7 @@ func FindAndResponseAsJSON(
 	return JSONResponse(metricResponse, w)
 }
 
+// Find ищет метрику в хранилище.
 func Find(
 	parseMetric domain.MetricInterface,
 	ServiceCollector *server.ServiceCollector,
@@ -70,6 +74,7 @@ func Find(
 	return metricResponse, nil
 }
 
+// JSONResponse сериализует данные в JSON и отправляет в HTTP-ответ.
 func JSONResponse(data interface{}, w http.ResponseWriter) ([]byte, error) {
 	JSONResponse, err := json.Marshal(data)
 	if err != nil {

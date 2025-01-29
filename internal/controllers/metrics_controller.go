@@ -1,6 +1,7 @@
 package controllers
 
 import (
+	_ "github.com/SmirnovND/metrics/internal/domain"
 	"github.com/SmirnovND/metrics/internal/pkg/paramsparser"
 	"github.com/SmirnovND/metrics/internal/services/server"
 	serverSaver "github.com/SmirnovND/metrics/internal/usecase/server"
@@ -17,6 +18,17 @@ func NewMetricsController(serviceCollector *server.ServiceCollector) *MetricsCon
 	}
 }
 
+// @HandleUpdate Обновление метрики
+// @Description Обновляет метрику по данным формы
+// @Tags Update
+// @Accept application/x-www-form-urlencoded
+// @Produce text/plain
+// @Param type formData string true "Тип метрики"
+// @Param name formData string true "Название метрики"
+// @Param value formData string true "Значение метрики"
+// @Success 200
+// @Failure 400
+// @Router /update/{type}/{name}/{value} [post]
 func (mc *MetricsController) HandleUpdate(w http.ResponseWriter, r *http.Request) {
 	parseMetric, err := paramsparser.QueryParseMetricAndValue(w, r)
 	if err != nil {
@@ -27,6 +39,15 @@ func (mc *MetricsController) HandleUpdate(w http.ResponseWriter, r *http.Request
 	w.WriteHeader(http.StatusOK)
 }
 
+// @HandleUpdateJson Обновление метрики
+// @Description Обновляет метрику на основе JSON тела запроса
+// @Tags Update
+// @Accept application/json
+// @Produce application/json
+// @Param body body domain.Metric true "Данные метрики"
+// @Success 200 {object} domain.Metric "Обновленная метрика"
+// @Failure 400 {string} string "Ошибка в запросе"
+// @Router /update [post]
 func (mc *MetricsController) HandleUpdateJSON(w http.ResponseWriter, r *http.Request) {
 	parseMetric, err := paramsparser.JSONParseMetric(w, r)
 	if err != nil {
@@ -42,6 +63,15 @@ func (mc *MetricsController) HandleUpdateJSON(w http.ResponseWriter, r *http.Req
 	w.Write(JSONResponse)
 }
 
+// @HandleUpdateJson Обновление метрик
+// @Description Обновляет массив метрик на основе JSON тела запроса
+// @Tags Update
+// @Accept application/json
+// @Produce application/json
+// @Param body body []domain.Metric true "Массив данных метрик"
+// @Success 200 {array} []domain.Metric "Массив обновленных метрик"
+// @Failure 400 {string} string "Ошибка в запросе"
+// @Router /updates [post]
 func (mc *MetricsController) HandleUpdatesJSON(w http.ResponseWriter, r *http.Request) {
 	parseMetrics, err := paramsparser.JSONParseMetrics(w, r)
 	if err != nil {
@@ -57,6 +87,16 @@ func (mc *MetricsController) HandleUpdatesJSON(w http.ResponseWriter, r *http.Re
 	w.Write(JSONResponse)
 }
 
+// @HandleGetValue Получение значения метрики по типу и имени
+// @Description Получает значение метрики на основе типа и имени
+// @Tags Update
+// @Accept application/json
+// @Produce text/plain
+// @Param type path string true "Тип метрики"
+// @Param name path string true "Название метрики"
+// @Success 200 {string} string "Значение метрики"
+// @Failure 400 {string} string "Ошибка в запросе"
+// @Router /value/{type}/{name} [get]
 func (mc *MetricsController) HandleValue(w http.ResponseWriter, r *http.Request) {
 	parseMetric, err := paramsparser.QueryParseMetric(w, r)
 	if err != nil {
@@ -92,6 +132,15 @@ func (mc *MetricsController) HandleRoot(w http.ResponseWriter, r *http.Request) 
 	w.WriteHeader(http.StatusOK)
 }
 
+// @HandlePostValue Получение метрики по данным в теле запроса
+// @Description Принимает метрику без значения и возвращает тот же объект метрики с значением
+// @Tags Update
+// @Accept application/json
+// @Produce application/json
+// @Param body body domain.Metric true "Данные метрики"
+// @Success 200 {object} domain.Metric "Метрика с значением"
+// @Failure 400 {string} string "Ошибка в запросе"
+// @Router /value [post]
 func (mc *MetricsController) HandleValueJSON(w http.ResponseWriter, r *http.Request) {
 	parseMetric, err := paramsparser.JSONParseMetric(w, r)
 	if err != nil {

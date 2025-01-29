@@ -13,6 +13,7 @@ func NewMetrics() *Metrics {
 	}
 }
 
+// MetricResponse отражает интерфейс MetricInterface для Swagger-документации
 type MetricInterface interface {
 	MetricViewInterface
 	SetValue(value interface{}) MetricInterface
