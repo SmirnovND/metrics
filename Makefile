@@ -18,3 +18,12 @@ migrate-create:
 
 doc:
 	swag init -g ./cmd/server/main.go
+
+cover:
+	go test -cover ./...
+
+cover-save:
+	go test -coverprofile=coverage.out ./...
+
+cover-percent:
+	go tool cover -func=coverage.out | grep total

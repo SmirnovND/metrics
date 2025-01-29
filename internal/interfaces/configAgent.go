@@ -5,4 +5,5 @@ type ConfigAgent interface {
 	GetPollInterval() int
 	GetServerHost() string
 	GetKey() string
+	GetRateLimit() int
 }
