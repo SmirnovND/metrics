@@ -9,7 +9,7 @@ const MetricTypeCounter = "counter"
 
 func NewMetrics() *Metrics {
 	return &Metrics{
-		Data: make(map[string]MetricInterface),
+		Data: make(map[string]*Metric),
 	}
 }
 
@@ -28,10 +28,10 @@ type MetricViewInterface interface {
 }
 
 type Metric struct {
-	ID    string   `json:"id"`              // имя метрики
-	MType string   `json:"type"`            // параметр, принимающий значение gauge или counter
-	Delta *int64   `json:"delta,omitempty"` // значение метрики в случае передачи counter
-	Value *float64 `json:"value,omitempty"` // значение метрики в случае передачи gauge
+	ID    string  `json:"id"`              // имя метрики
+	MType string  `json:"type"`            // параметр, принимающий значение gauge или counter
+	Delta int64   `json:"delta,omitempty"` // значение метрики в случае передачи counter
+	Value float64 `json:"value,omitempty"` // значение метрики в случае передачи gauge
 }
 
 func (m *Metric) GetValue() interface{} {
@@ -45,9 +45,9 @@ func (m *Metric) GetValue() interface{} {
 
 func (m *Metric) SetValue(value interface{}) MetricInterface {
 	if m.MType == MetricTypeGauge {
-		m.Value = value.(*float64)
+		m.Value = value.(float64)
 	} else if m.MType == MetricTypeCounter {
-		m.Delta = value.(*int64)
+		m.Delta = value.(int64)
 	}
 	return m
 }
@@ -71,7 +71,7 @@ func (m *Metric) GetType() string {
 }
 
 type Metrics struct {
-	Data map[string]MetricInterface
+	Data map[string]*Metric
 	Mu   sync.RWMutex
 }
 

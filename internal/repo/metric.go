@@ -23,19 +23,19 @@ func (m *MemStorage) UpdateMetric(metricNew domain.MetricInterface) {
 
 	metricCurrent, ok := m.collection[metricNew.GetName()+metricNew.GetType()]
 	if ok && metricCurrent.GetType() == domain.MetricTypeCounter {
-		var currentValue *int64
-		if val, ok := metricCurrent.GetValue().(*int64); ok {
+		var currentValue int64
+		if val, ok := metricCurrent.GetValue().(int64); ok {
 			currentValue = val
 		}
 
 		// Обработка значения metricNew
-		var newValue *int64
-		if val, ok := metricNew.GetValue().(*int64); ok {
+		var newValue int64
+		if val, ok := metricNew.GetValue().(int64); ok {
 			newValue = val
 		}
-		setValue := *currentValue + *newValue
+		setValue := currentValue + newValue
 		// Устанавливаем новое значение, если оба значения обработаны
-		metricCurrent.SetValue(&setValue)
+		metricCurrent.SetValue(setValue)
 	} else {
 		m.collection[metricNew.GetName()+metricNew.GetType()] = metricNew
 	}

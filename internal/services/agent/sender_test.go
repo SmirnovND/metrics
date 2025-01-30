@@ -43,6 +43,12 @@ func (m *MockMetric) SetName(name string) domain.MetricInterface {
 	return m
 }
 
+func ToMetric(m *MockMetric) *domain.Metric {
+	met := &domain.Metric{}
+	met.SetName(m.name).SetType(m.typ).SetValue(m.value)
+	return met
+}
+
 // TestSend tests the Send method of Metrics.
 func TestSend(t *testing.T) {
 	// Создаем тестовый сервер
@@ -65,16 +71,17 @@ func TestSend(t *testing.T) {
 	}))
 	defer ts.Close() // Закрываем сервер после теста
 
+	v := 123.45
 	// Создаем объект Metrics
 	m := &domain.Metrics{
-		Data: map[string]domain.MetricInterface{
-			"testMetric": &MockMetric{name: "testMetric", value: 123.45, typ: "gauge"},
+		Data: map[string]*domain.Metric{
+			"testMetric": ToMetric(&MockMetric{name: "testMetric", value: v, typ: "gauge"}),
 		},
 		Mu: sync.RWMutex{},
 	}
 
+	// Вызываем метод Send
 	Send(m, ts.URL)
-
 }
 
 // MockMetricDefinition представляет собой мок для определения метрики.

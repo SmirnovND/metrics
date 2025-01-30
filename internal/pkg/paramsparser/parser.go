@@ -15,7 +15,7 @@ const (
 )
 
 // JSONParseMetric парсит JSON-тело запроса и преобразует его в структуру Metric.
-func JSONParseMetric(w http.ResponseWriter, r *http.Request) (domain.MetricInterface, error) {
+func JSONParseMetric(w http.ResponseWriter, r *http.Request) (*domain.Metric, error) {
 	var metric *domain.Metric
 	decoder := json.NewDecoder(r.Body)
 	err := decoder.Decode(&metric)

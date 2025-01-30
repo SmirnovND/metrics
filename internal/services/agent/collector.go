@@ -78,10 +78,10 @@ func Update(m *domain.Metrics, metrics MetricDefinitions) {
 		switch def.Type {
 		case domain.MetricTypeGauge:
 			floatVal, _ := value.(float64)
-			m.Data[name] = (&domain.Metric{}).SetType(def.Type).SetValue(&floatVal).SetName(name)
+			m.Data[name] = (&domain.Metric{}).SetType(def.Type).SetValue(floatVal).SetName(name).(*domain.Metric)
 		case domain.MetricTypeCounter:
 			intVal, _ := value.(int64)
-			m.Data[name] = (&domain.Metric{}).SetType(def.Type).SetValue(&intVal).SetName(name)
+			m.Data[name] = (&domain.Metric{}).SetType(def.Type).SetValue(intVal).SetName(name).(*domain.Metric)
 		}
 	}
 
@@ -90,16 +90,16 @@ func Update(m *domain.Metrics, metrics MetricDefinitions) {
 			if value, ok := pollCount.GetValue().(*int64); ok {
 				newValue := *value + 1
 				// Создаем новую метрику и заменяем старую
-				m.Data["PollCount"] = (&domain.Metric{}).SetType(domain.MetricTypeCounter).SetValue(&newValue).SetName("PollCount")
+				m.Data["PollCount"] = (&domain.Metric{}).SetType(domain.MetricTypeCounter).SetValue(newValue).SetName("PollCount").(*domain.Metric)
 			}
 		}
 	} else {
 		// Создаем новую метрику, если её нет в m.Data
 		initialValue := int64(1)
-		m.Data["PollCount"] = (&domain.Metric{}).SetType(domain.MetricTypeCounter).SetValue(&initialValue).SetName("PollCount")
+		m.Data["PollCount"] = (&domain.Metric{}).SetType(domain.MetricTypeCounter).SetValue(initialValue).SetName("PollCount").(*domain.Metric)
 	}
 
 	// Обновляем RandomValue
 	randomValue := rand.Float64() * 100
-	m.Data["RandomValue"] = (&domain.Metric{}).SetType(domain.MetricTypeGauge).SetValue(&randomValue).SetName("RandomValue")
+	m.Data["RandomValue"] = (&domain.Metric{}).SetType(domain.MetricTypeGauge).SetValue(randomValue).SetName("RandomValue").(*domain.Metric)
 }
