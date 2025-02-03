@@ -39,4 +39,3 @@ save-mem-prof:
 
 staticlint:
 	go run cmd/staticlint/main.go ./...
-
