@@ -106,7 +106,7 @@ func ExampleHandleValue() {
 
 	val := int64(42)
 	metric := &domain.Metric{}
-	metric.SetType("counter").SetValue(&val).SetName("my_metric")
+	metric.SetType("counter").SetValue(val).SetName("my_metric")
 	storage.UpdateMetric(metric)
 
 	serviceCollector := server.NewCollectorService(storage)
@@ -140,7 +140,7 @@ func ExampleHandleValueJSON() {
 
 	val := int64(42)
 	metric := &domain.Metric{}
-	metric.SetType("counter").SetValue(&val).SetName("my_metric")
+	metric.SetType("counter").SetValue(val).SetName("my_metric")
 	storage.UpdateMetric(metric)
 
 	serviceCollector := server.NewCollectorService(storage)

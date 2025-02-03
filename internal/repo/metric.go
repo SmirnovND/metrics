@@ -3,6 +3,7 @@ package repo
 import (
 	"errors"
 	"github.com/SmirnovND/metrics/internal/domain"
+	"github.com/SmirnovND/metrics/internal/interfaces"
 	"sync"
 )
 
@@ -11,7 +12,7 @@ type MemStorage struct {
 	mu         sync.RWMutex
 }
 
-func NewMetricRepo(collection map[string]domain.MetricInterface) *MemStorage {
+func NewMetricRepo(collection map[string]domain.MetricInterface) interfaces.MemStorageInterface {
 	return &MemStorage{
 		collection: collection,
 	}

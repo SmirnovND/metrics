@@ -101,24 +101,24 @@ func (s *ServiceBackup) backupToDB() {
 				value = sql.NullFloat64{Float64: metric.Value, Valid: true}
 			}
 
-			_, err := stmt.Exec(metric.ID, metric.MType, value, delta)
-			if err != nil {
+			_, errExec := stmt.Exec(metric.ID, metric.MType, value, delta)
+			if errExec != nil {
 				log.Info().
-					Err(err).
+					Err(errExec).
 					Msg("Ошибка вставки ")
 				tx.Rollback()
 				return
 			}
 		}
 
-		err = tx.Commit()
-		if err != nil {
+		errC := tx.Commit()
+		if errC != nil {
 			log.Info().
-				Err(err).
+				Err(errC).
 				Msg("Ошибка комита транщакции ")
 		} else {
 			log.Info().
-				Err(err).
+				Err(errC).
 				Msg("Метрики сохранены ")
 		}
 	})
@@ -127,13 +127,13 @@ func (s *ServiceBackup) backupToDB() {
 func RestoreMetric(cf interfaces.ConfigServer, db *sqlx.DB) map[string]domain.MetricInterface {
 	err := db.Ping()
 	if err != nil {
-		return restoreFromFile(cf.GetFileStoragePath(), cf.IsRestore())
+		return RestoreFromFile(cf.GetFileStoragePath(), cf.IsRestore())
 	} else {
-		return restoreFromDB(db)
+		return RestoreFromDB(db)
 	}
 }
 
-func restoreFromFile(filename string, restore bool) map[string]domain.MetricInterface {
+func RestoreFromFile(filename string, restore bool) map[string]domain.MetricInterface {
 	newCollection := make(map[string]*domain.Metric)
 
 	if !restore {
@@ -160,7 +160,7 @@ func restoreFromFile(filename string, restore bool) map[string]domain.MetricInte
 	return result
 }
 
-func restoreFromDB(db *sqlx.DB) map[string]domain.MetricInterface {
+func RestoreFromDB(db *sqlx.DB) map[string]domain.MetricInterface {
 	rows, err := db.Query("SELECT id, type, value, delta FROM metric")
 	if err != nil {
 		fmt.Println("Error querying database:", err)

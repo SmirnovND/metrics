@@ -10,6 +10,7 @@ help:
 	@$(TAB) make cover - отчет покрытия тестами
 	@$(TAB) make cover-save - сохранить отчет покрытия тестами
 	@$(TAB) make save-mem-prof - сохранить фаил профаилинга
+	@$(TAB) make staticlint - статический анализатор - запуск
 
 
 up-server:
@@ -35,3 +36,7 @@ cover-percent:
 
 save-mem-prof:
 	go test -bench=BenchmarkUpdateMemoryUsage -benchmem -memprofile profiles/base.pprof ./internal/services/agent
+
+staticlint:
+	go run cmd/staticlint/main.go ./...
+

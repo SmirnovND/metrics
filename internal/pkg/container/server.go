@@ -44,7 +44,7 @@ func (c *Container) provideDependencies() {
 
 	// Регистрируем репозиторий, передав конфигурацию
 	c.container.Provide(func(cf interfaces.ConfigServer, db *sqlx.DB) *repo.MemStorage {
-		return repo.NewMetricRepo(c.startCollectionFunc(cf, db))
+		return repo.NewMetricRepo(c.startCollectionFunc(cf, db)).(*repo.MemStorage)
 	})
 }
 
