@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"github.com/SmirnovND/metrics/internal/pkg/loggeer"
 	"github.com/rs/zerolog/log"
+	"io"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -22,7 +23,7 @@ func TestWithLogging(t *testing.T) {
 		// Эмулируем длительное выполнение
 		time.Sleep(100 * time.Millisecond)
 		w.WriteHeader(http.StatusOK)
-		w.Write([]byte("Hello, World"))
+		_, _ = w.Write([]byte("Hello, World")) // Обрабатываем ошибку записи
 	})
 
 	// Оборачиваем обработчик в наш middleware
@@ -35,8 +36,17 @@ func TestWithLogging(t *testing.T) {
 	// Выполняем запрос
 	loggedHandler.ServeHTTP(w, req)
 
+	// Получаем результат и закрываем тело ответа
+	resp := w.Result()
+	defer resp.Body.Close() // Добавляем закрытие body
+
 	// Проверяем код статуса ответа
-	assert.Equal(t, http.StatusOK, w.Result().StatusCode)
+	assert.Equal(t, http.StatusOK, resp.StatusCode)
+
+	// Читаем тело ответа, чтобы убедиться, что оно корректное
+	body, err := io.ReadAll(resp.Body)
+	assert.NoError(t, err)
+	assert.Equal(t, "Hello, World", string(body))
 
 	// Проверяем, что лог содержит ожидаемые данные
 	loggedOutput := logBuf.String()
@@ -47,7 +57,7 @@ func TestWithLogging(t *testing.T) {
 	assert.Contains(t, loggedOutput, "size")
 	assert.Contains(t, loggedOutput, "duration")
 
-	// Убедитесь, что размер логирования и статус присутствуют
+	// Убедитесь, что метод и статус присутствуют в логах
 	assert.Contains(t, loggedOutput, "GET")
 	assert.Contains(t, loggedOutput, "200")
 }
