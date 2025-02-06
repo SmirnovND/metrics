@@ -13,7 +13,7 @@ Package staticlint содержит кастомный multichecker.
   - nilerr: обнаружение игнорирования ошибок
   - bodyclose: проверка закрытия HTTP-ответов
 
-5. Кастомный анализатор os_exit_checker, запрещающий os.Exit в main.
+5. Кастомный анализатор exitchecker, запрещающий os.Exit в main.
 
 Пример использования:
 

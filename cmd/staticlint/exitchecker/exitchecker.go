@@ -7,7 +7,7 @@ import (
 )
 
 var Analyzer = &analysis.Analyzer{
-	Name: "os_exit_checker",
+	Name: "exitchecker",
 	Doc:  "checks for direct calls to os.Exit in main function of main package",
 	Run:  run,
 }

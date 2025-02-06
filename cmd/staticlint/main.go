@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"github.com/SmirnovND/metrics/cmd/staticlint/exitchecker"
 	"golang.org/x/tools/go/analysis"
 	"golang.org/x/tools/go/analysis/multichecker"
 	"golang.org/x/tools/go/analysis/passes/printf"
@@ -13,8 +14,6 @@ import (
 
 	"github.com/gostaticanalysis/nilerr"
 	"github.com/timakin/bodyclose/passes/bodyclose"
-
-	"github.com/SmirnovND/metrics/cmd/staticlint/os_exit_checker"
 )
 
 func main() {
@@ -49,7 +48,7 @@ func main() {
 	analyzers = append(analyzers, bodyclose.Analyzer) // Проверка закрытия `http.Response.Body`
 
 	// Собственный анализатор
-	analyzers = append(analyzers, os_exit_checker.Analyzer)
+	analyzers = append(analyzers, exitchecker.Analyzer)
 
 	for _, a := range analyzers {
 		fmt.Println(a.Name)
