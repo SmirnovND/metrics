@@ -1,6 +1,7 @@
 package middleware_test
 
 import (
+	"io"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -31,8 +32,8 @@ func statusCodeMiddleware(statusCode int) middleware.Middleware {
 func TestChainMiddleware(t *testing.T) {
 	// Создаем тестовый обработчик
 	handler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		w.WriteHeader(http.StatusOK) // Основной код обработки
-		w.Write([]byte("Hello, World"))
+		w.WriteHeader(http.StatusOK)           // Основной код обработки
+		_, _ = w.Write([]byte("Hello, World")) // Явно обрабатываем возможную ошибку записи
 	})
 
 	// Создаем цепочку middleware
@@ -48,12 +49,18 @@ func TestChainMiddleware(t *testing.T) {
 	// Выполняем запрос через цепочку middleware
 	chain.ServeHTTP(w, req)
 
+	// Получаем результат
+	resp := w.Result()
+	defer resp.Body.Close() // Закрываем body, если линтер требует
+
 	// Проверяем, что статус код ответа правильный
-	assert.Equal(t, http.StatusAccepted, w.Result().StatusCode)
+	assert.Equal(t, http.StatusAccepted, resp.StatusCode)
 
 	// Проверяем, что заголовок был добавлен
-	assert.Equal(t, "HeaderValue", w.Header().Get("X-Test-Header"))
+	assert.Equal(t, "HeaderValue", resp.Header.Get("X-Test-Header"))
 
 	// Проверяем, что тело ответа правильно записано
-	assert.Equal(t, "Hello, World", w.Body.String())
+	body, err := io.ReadAll(resp.Body)
+	assert.NoError(t, err)
+	assert.Equal(t, "Hello, World", string(body))
 }
