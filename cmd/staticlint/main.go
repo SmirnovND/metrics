@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"golang.org/x/tools/go/analysis"
 	"golang.org/x/tools/go/analysis/multichecker"
 	"golang.org/x/tools/go/analysis/passes/printf"
@@ -17,6 +18,7 @@ import (
 )
 
 func main() {
+	fmt.Println("Enabled analyzers:")
 	var analyzers []*analysis.Analyzer
 
 	// Стандартные анализаторы из golang.org/x/tools/go/analysis/passes
@@ -49,6 +51,9 @@ func main() {
 	// Собственный анализатор
 	analyzers = append(analyzers, os_exit_checker.Analyzer)
 
+	for _, a := range analyzers {
+		fmt.Println(a.Name)
+	}
 	// Запуск multichecker
 	multichecker.Main(analyzers...)
 }

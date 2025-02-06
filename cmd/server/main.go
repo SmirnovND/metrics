@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	_ "github.com/SmirnovND/metrics/docs"
 	"github.com/SmirnovND/metrics/internal/interfaces"
 	"github.com/SmirnovND/metrics/internal/middleware"
@@ -16,6 +17,12 @@ import (
 	_ "net/http/pprof"
 )
 
+var (
+	buildVersion string
+	buildDate    string
+	buildCommit  string
+)
+
 func main() {
 	if err := Run(); err != nil {
 		panic(err)
@@ -23,6 +30,8 @@ func main() {
 }
 
 func Run() error {
+	// Вывод информации о сборке
+	printBuildInfo()
 
 	diContainer := container.NewContainer(container.WithStartCollectionFunc(usecase.RestoreBackup))
 
@@ -52,4 +61,21 @@ func Run() error {
 			return crypto.WithHashMiddleware(cf, next)
 		},
 	))
+}
+
+// printBuildInfo выводит информацию о версии сборки
+func printBuildInfo() {
+	if buildVersion == "" {
+		buildVersion = "N/A"
+	}
+	if buildDate == "" {
+		buildDate = "N/A"
+	}
+	if buildCommit == "" {
+		buildCommit = "N/A"
+	}
+
+	fmt.Printf("Build version: %s\n", buildVersion)
+	fmt.Printf("Build date: %s\n", buildDate)
+	fmt.Printf("Build commit: %s\n", buildCommit)
 }

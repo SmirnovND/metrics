@@ -63,7 +63,7 @@ func (mc *MetricsController) HandleUpdateJSON(w http.ResponseWriter, r *http.Req
 	w.Write(JSONResponse)
 }
 
-// @HandleUpdateJson Обновление метрик
+// @HandleUpdatesJSON Обновление метрик
 // @Description Обновляет массив метрик на основе JSON тела запроса
 // @Tags Update
 // @Accept application/json
@@ -132,7 +132,7 @@ func (mc *MetricsController) HandleRoot(w http.ResponseWriter, r *http.Request) 
 	w.WriteHeader(http.StatusOK)
 }
 
-// @HandlePostValue Получение метрики по данным в теле запроса
+// @HandleValueJSON Получение метрики по данным в теле запроса
 // @Description Принимает метрику без значения и возвращает тот же объект метрики с значением
 // @Tags Update
 // @Accept application/json
