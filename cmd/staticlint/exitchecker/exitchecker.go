@@ -1,4 +1,4 @@
-package os_exit_checker
+package exitchecker
 
 import (
 	"go/ast"
