@@ -6,19 +6,18 @@ import (
 	"fmt"
 	"github.com/SmirnovND/metrics/internal/domain"
 	"github.com/SmirnovND/metrics/internal/interfaces"
-	"github.com/SmirnovND/metrics/internal/repo"
 	"github.com/jmoiron/sqlx"
 	"github.com/rs/zerolog/log"
 	"os"
 )
 
 type ServiceBackup struct {
-	storage *repo.MemStorage
+	storage interfaces.MemStorageInterface
 	cf      interfaces.ConfigServer
 	db      *sqlx.DB
 }
 
-func NewServiceBackup(storage *repo.MemStorage, cf interfaces.ConfigServer, db *sqlx.DB) *ServiceBackup {
+func NewServiceBackup(storage interfaces.MemStorageInterface, cf interfaces.ConfigServer, db *sqlx.DB) *ServiceBackup {
 	return &ServiceBackup{
 		storage: storage,
 		cf:      cf,

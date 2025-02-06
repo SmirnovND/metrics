@@ -2,17 +2,17 @@ package controllers
 
 import (
 	_ "github.com/SmirnovND/metrics/internal/domain"
+	"github.com/SmirnovND/metrics/internal/interfaces"
 	"github.com/SmirnovND/metrics/internal/pkg/paramsparser"
-	"github.com/SmirnovND/metrics/internal/services/server"
 	serverSaver "github.com/SmirnovND/metrics/internal/usecase/server"
 	"net/http"
 )
 
 type MetricsController struct {
-	ServiceCollector *server.ServiceCollector
+	ServiceCollector interfaces.ServiceCollectorInterface
 }
 
-func NewMetricsController(serviceCollector *server.ServiceCollector) *MetricsController {
+func NewMetricsController(serviceCollector interfaces.ServiceCollectorInterface) *MetricsController {
 	return &MetricsController{
 		ServiceCollector: serviceCollector,
 	}

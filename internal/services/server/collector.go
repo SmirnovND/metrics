@@ -10,7 +10,7 @@ type ServiceCollector struct {
 	storage interfaces.MemStorageInterface
 }
 
-func NewCollectorService(storage interfaces.MemStorageInterface) *ServiceCollector {
+func NewCollectorService(storage interfaces.MemStorageInterface) interfaces.ServiceCollectorInterface {
 	return &ServiceCollector{
 		storage: storage,
 	}

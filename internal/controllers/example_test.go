@@ -168,3 +168,59 @@ func ExampleHandleValueJSON() {
 	// 200
 	// {"id":"my_metric","type":"counter","delta":42}
 }
+
+func ExampleHandleUpdate_ErrorCases() {
+	collection := make(map[string]domain.MetricInterface)
+	storage := repo.NewMetricRepo(collection)
+	serviceCollector := server.NewCollectorService(storage)
+	controller := &MetricsController{ServiceCollector: serviceCollector}
+
+	router := chi.NewRouter()
+	router.Post("/update/{type}/{name}/{value}", controller.HandleUpdate)
+
+	// Ошибка: некорректный тип метрики
+	req := httptest.NewRequest(http.MethodPost, "/update/unknown_metric/my_metric/10", nil)
+	rr := httptest.NewRecorder()
+	router.ServeHTTP(rr, req)
+	fmt.Println(rr.Code) // 400
+
+	// Ошибка: отсутствует значение метрики
+	req = httptest.NewRequest(http.MethodPost, "/update/counter/my_metric/", nil)
+	rr = httptest.NewRecorder()
+	router.ServeHTTP(rr, req)
+	fmt.Println(rr.Code) // 404
+}
+
+func ExampleHandleUpdateJSON_ErrorCases() {
+	collection := make(map[string]domain.MetricInterface)
+	storage := repo.NewMetricRepo(collection)
+	serviceCollector := server.NewCollectorService(storage)
+	controller := &MetricsController{ServiceCollector: serviceCollector}
+
+	router := chi.NewRouter()
+	router.Post("/update", controller.HandleUpdateJSON)
+
+	// Ошибка: некорректный JSON
+	body := `{"id":"my_metric","type":"counter"}`
+	req := httptest.NewRequest(http.MethodPost, "/update", strings.NewReader(body))
+	req.Header.Set("Content-Type", "application/json")
+	rr := httptest.NewRecorder()
+	router.ServeHTTP(rr, req)
+	fmt.Println(rr.Code) // 400
+}
+
+func ExampleHandleValue_ErrorCases() {
+	collection := make(map[string]domain.MetricInterface)
+	storage := repo.NewMetricRepo(collection)
+	serviceCollector := server.NewCollectorService(storage)
+	controller := &MetricsController{ServiceCollector: serviceCollector}
+
+	router := chi.NewRouter()
+	router.Get("/value/{type}/{name}", controller.HandleValue)
+
+	// Ошибка: метрика не найдена
+	req := httptest.NewRequest(http.MethodGet, "/value/counter/unknown_metric", nil)
+	rr := httptest.NewRecorder()
+	router.ServeHTTP(rr, req)
+	fmt.Println(rr.Code) // 404
+}
