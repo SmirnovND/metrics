@@ -4,14 +4,14 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/SmirnovND/metrics/internal/domain"
-	"github.com/SmirnovND/metrics/internal/services/server"
+	"github.com/SmirnovND/metrics/internal/interfaces"
 	"net/http"
 )
 
 // SaveAndFind сохраняет переданную метрику и возвращает её в виде JSON-ответа.
 func SaveAndFind(
 	parseMetric domain.MetricInterface,
-	ServiceCollector *server.ServiceCollector,
+	ServiceCollector interfaces.ServiceCollectorInterface,
 	w http.ResponseWriter,
 ) ([]byte, error) {
 	ServiceCollector.SaveMetric(parseMetric)
@@ -21,7 +21,7 @@ func SaveAndFind(
 // SaveAndFindArr сохраняет массив метрик и возвращает их обновленные значения в JSON-формате.
 func SaveAndFindArr(
 	parseMetrics []*domain.Metric,
-	ServiceCollector *server.ServiceCollector,
+	ServiceCollector interfaces.ServiceCollectorInterface,
 	w http.ResponseWriter,
 ) ([]byte, error) {
 	var metricsResponse []*domain.Metric
@@ -48,7 +48,7 @@ func SaveAndFindArr(
 // FindAndResponseAsJSON выполняет поиск метрики и возвращает результат в формате JSON.
 func FindAndResponseAsJSON(
 	parseMetric domain.MetricInterface,
-	ServiceCollector *server.ServiceCollector,
+	ServiceCollector interfaces.ServiceCollectorInterface,
 	w http.ResponseWriter,
 ) ([]byte, error) {
 	metricResponse, err := Find(parseMetric, ServiceCollector, w)
@@ -62,7 +62,7 @@ func FindAndResponseAsJSON(
 // Find ищет метрику в хранилище.
 func Find(
 	parseMetric domain.MetricInterface,
-	ServiceCollector *server.ServiceCollector,
+	ServiceCollector interfaces.ServiceCollectorInterface,
 	w http.ResponseWriter,
 ) (domain.MetricInterface, error) {
 	metricResponse, err := ServiceCollector.FindMetric(parseMetric.GetName(), parseMetric.GetType())

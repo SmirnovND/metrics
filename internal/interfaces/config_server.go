@@ -2,7 +2,7 @@ package interfaces
 
 import "time"
 
-type ConfigServer interface {
+type ConfigServerInterface interface {
 	GetStoreInterval() time.Duration
 	GetFileStoragePath() string
 	IsRestore() bool

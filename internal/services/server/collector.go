@@ -3,14 +3,14 @@ package server
 import (
 	"fmt"
 	"github.com/SmirnovND/metrics/internal/domain"
-	"github.com/SmirnovND/metrics/internal/repo"
+	"github.com/SmirnovND/metrics/internal/interfaces"
 )
 
 type ServiceCollector struct {
-	storage *repo.MemStorage
+	storage interfaces.MemStorageInterface
 }
 
-func NewCollectorService(storage *repo.MemStorage) *ServiceCollector {
+func NewCollectorService(storage interfaces.MemStorageInterface) interfaces.ServiceCollectorInterface {
 	return &ServiceCollector{
 		storage: storage,
 	}

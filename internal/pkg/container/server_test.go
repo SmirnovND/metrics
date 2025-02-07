@@ -9,7 +9,7 @@ import (
 )
 
 // Моковая функция для инициализации коллекции метрик
-func mockStartCollectionFunc(cf interfaces.ConfigServer, db *sqlx.DB) map[string]domain.MetricInterface {
+func mockStartCollectionFunc(cf interfaces.ConfigServerInterface, db *sqlx.DB) map[string]domain.MetricInterface {
 	metric := &domain.Gauge{}
 	value := 42.0
 	metric.SetName("test_metric").SetValue(&value)
@@ -39,9 +39,9 @@ func TestProvideDependencies(t *testing.T) {
 	// Создаем контейнер с моковой функцией
 	c := NewContainer(WithStartCollectionFunc(mockStartCollectionFunc))
 
-	err := c.Invoke(func(cfg interfaces.ConfigServer, database *sqlx.DB, storage *repo.MemStorage) {
+	err := c.Invoke(func(cfg interfaces.ConfigServerInterface, database *sqlx.DB, storage *repo.MemStorage) {
 		if cfg == nil {
-			t.Error("ConfigServer не должен быть nil")
+			t.Error("ConfigServerInterface не должен быть nil")
 		}
 		if database == nil {
 			t.Error("DB не должна быть nil")

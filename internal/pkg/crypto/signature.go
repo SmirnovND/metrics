@@ -23,7 +23,7 @@ func (w *hashResponseWriter) Write(data []byte) (int, error) {
 	return w.ResponseWriter.Write(data)
 }
 
-func WithHashMiddleware(config interfaces.ConfigServer, next http.Handler) http.Handler {
+func WithHashMiddleware(config interfaces.ConfigServerInterface, next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		hashWriter := &hashResponseWriter{
 			ResponseWriter: w,
@@ -60,7 +60,7 @@ func calculateHash(data []byte, key string) string {
 	return hex.EncodeToString(h.Sum(nil))
 }
 
-func WithCryptoKey(config interfaces.ConfigServer, next http.Handler) http.Handler {
+func WithCryptoKey(config interfaces.ConfigServerInterface, next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if config.GetKey() == "" {
 			next.ServeHTTP(w, r)

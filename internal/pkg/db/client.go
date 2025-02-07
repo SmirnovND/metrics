@@ -20,7 +20,7 @@ func ConfigureDB(db *sqlx.DB) {
 	db.SetMaxOpenConns(maxOpenConnections)
 }
 
-func NewDB(c interfaces.ConfigServer) *sqlx.DB {
+func NewDB(c interfaces.ConfigServerInterface) *sqlx.DB {
 	dsn := c.GetDBDsn()
 	if c.GetDBDsn() == "" {
 		dsn = "invalid_dsn"

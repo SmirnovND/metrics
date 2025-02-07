@@ -6,19 +6,18 @@ import (
 	"fmt"
 	"github.com/SmirnovND/metrics/internal/domain"
 	"github.com/SmirnovND/metrics/internal/interfaces"
-	"github.com/SmirnovND/metrics/internal/repo"
 	"github.com/jmoiron/sqlx"
 	"github.com/rs/zerolog/log"
 	"os"
 )
 
 type ServiceBackup struct {
-	storage *repo.MemStorage
-	cf      interfaces.ConfigServer
+	storage interfaces.MemStorageInterface
+	cf      interfaces.ConfigServerInterface
 	db      *sqlx.DB
 }
 
-func NewServiceBackup(storage *repo.MemStorage, cf interfaces.ConfigServer, db *sqlx.DB) *ServiceBackup {
+func NewServiceBackup(storage interfaces.MemStorageInterface, cf interfaces.ConfigServerInterface, db *sqlx.DB) *ServiceBackup {
 	return &ServiceBackup{
 		storage: storage,
 		cf:      cf,
@@ -32,19 +31,19 @@ func (s *ServiceBackup) Backup() {
 		log.Info().
 			Err(err).
 			Msg("Ошибка соединения с базой ")
-		s.backupToFile()
+		s.BackupToFile()
 		return
 	} else {
-		s.backupToDB()
+		s.BackupToDB()
 	}
 }
 
-func (s *ServiceBackup) backupToFile() {
+func (s *ServiceBackup) BackupToFile() {
 	file, err := os.Create(s.cf.GetFileStoragePath())
 	if err != nil {
 		log.Info().
 			Err(err).
-			Msg("Ошибка backupToFile ")
+			Msg("Ошибка BackupToFile ")
 		return
 	}
 	defer file.Close()
@@ -54,13 +53,13 @@ func (s *ServiceBackup) backupToFile() {
 		if err != nil {
 			log.Info().
 				Err(err).
-				Msg("Ошибка backupToFile ")
+				Msg("Ошибка BackupToFile ")
 			return
 		}
 	})
 }
 
-func (s *ServiceBackup) backupToDB() {
+func (s *ServiceBackup) BackupToDB() {
 	tx, err := s.db.Begin()
 	if err != nil {
 		log.Info().
@@ -101,39 +100,39 @@ func (s *ServiceBackup) backupToDB() {
 				value = sql.NullFloat64{Float64: metric.Value, Valid: true}
 			}
 
-			_, err := stmt.Exec(metric.ID, metric.MType, value, delta)
-			if err != nil {
+			_, errExec := stmt.Exec(metric.ID, metric.MType, value, delta)
+			if errExec != nil {
 				log.Info().
-					Err(err).
+					Err(errExec).
 					Msg("Ошибка вставки ")
 				tx.Rollback()
 				return
 			}
 		}
 
-		err = tx.Commit()
-		if err != nil {
+		errC := tx.Commit()
+		if errC != nil {
 			log.Info().
-				Err(err).
+				Err(errC).
 				Msg("Ошибка комита транщакции ")
 		} else {
 			log.Info().
-				Err(err).
+				Err(errC).
 				Msg("Метрики сохранены ")
 		}
 	})
 }
 
-func RestoreMetric(cf interfaces.ConfigServer, db *sqlx.DB) map[string]domain.MetricInterface {
+func RestoreMetric(cf interfaces.ConfigServerInterface, db *sqlx.DB) map[string]domain.MetricInterface {
 	err := db.Ping()
 	if err != nil {
-		return restoreFromFile(cf.GetFileStoragePath(), cf.IsRestore())
+		return RestoreFromFile(cf.GetFileStoragePath(), cf.IsRestore())
 	} else {
-		return restoreFromDB(db)
+		return RestoreFromDB(db)
 	}
 }
 
-func restoreFromFile(filename string, restore bool) map[string]domain.MetricInterface {
+func RestoreFromFile(filename string, restore bool) map[string]domain.MetricInterface {
 	newCollection := make(map[string]*domain.Metric)
 
 	if !restore {
@@ -160,7 +159,7 @@ func restoreFromFile(filename string, restore bool) map[string]domain.MetricInte
 	return result
 }
 
-func restoreFromDB(db *sqlx.DB) map[string]domain.MetricInterface {
+func RestoreFromDB(db *sqlx.DB) map[string]domain.MetricInterface {
 	rows, err := db.Query("SELECT id, type, value, delta FROM metric")
 	if err != nil {
 		fmt.Println("Error querying database:", err)

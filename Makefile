@@ -9,7 +9,9 @@ help:
 	@$(TAB) make cover-percent - процент покрытия тестами\(читаем из фаила отчета\)
 	@$(TAB) make cover - отчет покрытия тестами
 	@$(TAB) make cover-save - сохранить отчет покрытия тестами
+	@$(TAB) make cover-func - покрытие по функциям
 	@$(TAB) make save-mem-prof - сохранить фаил профаилинга
+	@$(TAB) make staticlint - статический анализатор - запуск
 
 
 up-server:
@@ -30,8 +32,15 @@ cover:
 cover-save:
 	go test -coverprofile=coverage.out ./...
 
+cover-func:
+	go tool cover -func=coverage.out
+
 cover-percent:
 	go tool cover -func=coverage.out | grep total
 
 save-mem-prof:
 	go test -bench=BenchmarkUpdateMemoryUsage -benchmem -memprofile profiles/base.pprof ./internal/services/agent
+
+staticlint:
+	go run cmd/staticlint/main.go ./...
+
