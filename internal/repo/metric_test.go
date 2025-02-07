@@ -52,24 +52,3 @@ func TestMemStorage_GetMetric(t *testing.T) {
 	assert.NoError(t, err)
 	assert.Equal(t, int64(10), metric.GetValue())
 }
-
-//func TestMemStorage_ExecuteWithLock(t *testing.T) {
-//	metricRepo := NewMetricRepo(make(map[string]domain.MetricInterface))
-//
-//	metric := &domain.Metric{}
-//	metric.SetType(domain.MetricTypeCounter).SetValue(10).SetName("metric_for_lock_test")
-//	metricRepo.UpdateMetric(metric)
-//
-//	// Выполняем функцию с блокировкой
-//	metricRepo.ExecuteWithLock(func(collection map[string]domain.MetricInterface) {
-//		// Проверяем наличие метрики в коллекции внутри заблокированного кода
-//		assert.Contains(t, collection, "metric_for_lock_test"+domain.MetricTypeCounter)
-//		// Проверяем значение метрики
-//		assert.Equal(t, int64(10), collection["metric_for_lock_test"+domain.MetricTypeCounter].GetValue())
-//	})
-//
-//	// После выполнения блока функции, метрика должна остаться
-//	metric, err := metricRepo.GetMetric("metric_for_lock_test", domain.MetricTypeCounter)
-//	assert.NoError(t, err)
-//	assert.Equal(t, int64(10), metric.GetValue())
-//}
