@@ -4,10 +4,13 @@ import (
 	"encoding/json"
 	"github.com/DATA-DOG/go-sqlmock"
 	"github.com/SmirnovND/metrics/internal/domain"
+	"github.com/SmirnovND/metrics/internal/mocks"
 	"github.com/SmirnovND/metrics/internal/repo"
 	"github.com/SmirnovND/metrics/internal/services/server"
 	"github.com/jmoiron/sqlx"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/mock"
+	"github.com/stretchr/testify/require"
 	"os"
 	"testing"
 	"time"
@@ -38,6 +41,55 @@ func TestServiceBackup_Backup(t *testing.T) {
 	if err := mock.ExpectationsWereMet(); err != nil {
 		t.Errorf("Не все ожидания были выполнены: %v", err)
 	}
+}
+
+func TestBackupToFile(t *testing.T) {
+	// Создаем моки
+	mockStorage := new(mocks.MemStorageInterface)
+	mockConfig := new(mocks.ConfigServer)
+
+	// Создаем временный файл для проверки записи данных
+	tmpFile, err := os.CreateTemp("", "backup_test.json")
+	require.NoError(t, err)
+	defer os.Remove(tmpFile.Name())
+
+	// Ожидание вызова GetFileStoragePath() и возврат пути файла
+	mockConfig.On("GetFileStoragePath").Return(tmpFile.Name())
+
+	// Эмулируем ExecuteWithLock, передавая внутрь функцию
+	mockStorage.On("ExecuteWithLock", mock.Anything).Run(func(args mock.Arguments) {
+		fn := args.Get(0).(func(map[string]domain.MetricInterface))
+		testData := map[string]domain.MetricInterface{
+			"test_metric": nil, // Добавляем тестовые данные
+		}
+		fn(testData) // Вызываем переданную функцию с тестовыми данными
+	}).Once()
+
+	// Создаем сервис
+	service := server.NewServiceBackup(mockStorage, mockConfig, nil)
+
+	// Вызываем BackupToFile()
+	service.BackupToFile()
+
+	// Читаем записанный файл
+	content, err := os.ReadFile(tmpFile.Name())
+	require.NoError(t, err)
+	require.Contains(t, string(content), "test_metric") // Проверяем, что данные записались
+}
+
+func TestBackupToFile_FileCreateError(t *testing.T) {
+	mockStorage := new(MockMemStorage)
+	mockConfig := new(MockConfigServer)
+
+	// Неверный путь, эмулируем ошибку создания файла
+	mockConfig.On("GetFileStoragePath").Return("/invalid_path/backup.json")
+
+	service := server.NewServiceBackup(mockStorage, mockConfig, nil)
+	service.BackupToFile()
+
+	// Проверяем, что `ExecuteWithLock` не вызывался, так как файл не создался
+	mockStorage.AssertNotCalled(t, "ExecuteWithLock", mock.Anything)
+	mockConfig.AssertExpectations(t)
 }
 
 func TestRestoreMetric(t *testing.T) {
@@ -136,4 +188,34 @@ func (m *mockConfigServer) GetDBDsn() string {
 
 func (m *mockConfigServer) GetKey() string {
 	return "some-key"
+}
+
+// MockConfigServer - мок для ConfigServer
+type MockConfigServer struct {
+	mock.Mock
+}
+
+func (m *MockConfigServer) GetFileStoragePath() string {
+	args := m.Called()
+	return args.String(0)
+}
+
+func (m *MockConfigServer) GetStoreInterval() time.Duration {
+	return 0 // Если в тесте не используется, просто возвращаем 0
+}
+
+func (m *MockConfigServer) IsRestore() bool {
+	return false // Аналогично
+}
+
+func (m *MockConfigServer) GetFlagRunAddr() string {
+	return "" // Аналогично
+}
+
+func (m *MockConfigServer) GetDBDsn() string {
+	return "" // Заглушка
+}
+
+func (m *MockConfigServer) GetKey() string {
+	return "" // Заглушка
 }

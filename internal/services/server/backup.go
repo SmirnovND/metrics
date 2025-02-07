@@ -13,11 +13,11 @@ import (
 
 type ServiceBackup struct {
 	storage interfaces.MemStorageInterface
-	cf      interfaces.ConfigServer
+	cf      interfaces.ConfigServerInterface
 	db      *sqlx.DB
 }
 
-func NewServiceBackup(storage interfaces.MemStorageInterface, cf interfaces.ConfigServer, db *sqlx.DB) *ServiceBackup {
+func NewServiceBackup(storage interfaces.MemStorageInterface, cf interfaces.ConfigServerInterface, db *sqlx.DB) *ServiceBackup {
 	return &ServiceBackup{
 		storage: storage,
 		cf:      cf,
@@ -31,19 +31,19 @@ func (s *ServiceBackup) Backup() {
 		log.Info().
 			Err(err).
 			Msg("Ошибка соединения с базой ")
-		s.backupToFile()
+		s.BackupToFile()
 		return
 	} else {
-		s.backupToDB()
+		s.BackupToDB()
 	}
 }
 
-func (s *ServiceBackup) backupToFile() {
+func (s *ServiceBackup) BackupToFile() {
 	file, err := os.Create(s.cf.GetFileStoragePath())
 	if err != nil {
 		log.Info().
 			Err(err).
-			Msg("Ошибка backupToFile ")
+			Msg("Ошибка BackupToFile ")
 		return
 	}
 	defer file.Close()
@@ -53,13 +53,13 @@ func (s *ServiceBackup) backupToFile() {
 		if err != nil {
 			log.Info().
 				Err(err).
-				Msg("Ошибка backupToFile ")
+				Msg("Ошибка BackupToFile ")
 			return
 		}
 	})
 }
 
-func (s *ServiceBackup) backupToDB() {
+func (s *ServiceBackup) BackupToDB() {
 	tx, err := s.db.Begin()
 	if err != nil {
 		log.Info().
@@ -123,7 +123,7 @@ func (s *ServiceBackup) backupToDB() {
 	})
 }
 
-func RestoreMetric(cf interfaces.ConfigServer, db *sqlx.DB) map[string]domain.MetricInterface {
+func RestoreMetric(cf interfaces.ConfigServerInterface, db *sqlx.DB) map[string]domain.MetricInterface {
 	err := db.Ping()
 	if err != nil {
 		return RestoreFromFile(cf.GetFileStoragePath(), cf.IsRestore())

@@ -35,10 +35,10 @@ func Run() error {
 
 	diContainer := container.NewContainer(container.WithStartCollectionFunc(usecase.RestoreBackup))
 
-	var cf interfaces.ConfigServer
+	var cf interfaces.ConfigServerInterface
 	var storage *repo.MemStorage
 	var db *sqlx.DB
-	diContainer.Invoke(func(c interfaces.ConfigServer, s *repo.MemStorage, d *sqlx.DB) {
+	diContainer.Invoke(func(c interfaces.ConfigServerInterface, s *repo.MemStorage, d *sqlx.DB) {
 		cf = c
 		storage = s
 		db = d

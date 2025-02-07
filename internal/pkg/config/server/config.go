@@ -42,7 +42,7 @@ func (c *Config) GetKey() string {
 	return c.Key
 }
 
-func NewConfigCommand() (cf interfaces.ConfigServer) {
+func NewConfigCommand() (cf interfaces.ConfigServerInterface) {
 	config := new(Config)
 
 	flag.IntVar(&config.StoreInterval, "i", DefaultStoreInterval, "")
