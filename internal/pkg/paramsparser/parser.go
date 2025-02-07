@@ -14,7 +14,8 @@ const (
 	radix      = 10
 )
 
-func JSONParseMetric(w http.ResponseWriter, r *http.Request) (domain.MetricInterface, error) {
+// JSONParseMetric парсит JSON-тело запроса и преобразует его в структуру Metric.
+func JSONParseMetric(w http.ResponseWriter, r *http.Request) (*domain.Metric, error) {
 	var metric *domain.Metric
 	decoder := json.NewDecoder(r.Body)
 	err := decoder.Decode(&metric)
@@ -25,6 +26,7 @@ func JSONParseMetric(w http.ResponseWriter, r *http.Request) (domain.MetricInter
 	return metric, nil
 }
 
+// JSONParseMetrics парсит JSON-тело запроса и преобразует его в массив структур Metric.
 func JSONParseMetrics(w http.ResponseWriter, r *http.Request) ([]*domain.Metric, error) {
 	var metrics []*domain.Metric
 	decoder := json.NewDecoder(r.Body)
@@ -37,6 +39,7 @@ func JSONParseMetrics(w http.ResponseWriter, r *http.Request) ([]*domain.Metric,
 	return metrics, nil
 }
 
+// QueryParseMetricAndValue парсит параметры запроса из URL и создает объект метрики с заданным значением.
 func QueryParseMetricAndValue(w http.ResponseWriter, r *http.Request) (domain.MetricInterface, error) {
 	var metric domain.MetricInterface
 
@@ -76,6 +79,7 @@ func QueryParseMetricAndValue(w http.ResponseWriter, r *http.Request) (domain.Me
 	return metric, nil
 }
 
+// QueryParseMetric парсит параметры запроса из URL и создает объект метрики без значения.
 func QueryParseMetric(w http.ResponseWriter, r *http.Request) (domain.MetricInterface, error) {
 	var metric domain.MetricInterface
 

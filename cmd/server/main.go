@@ -1,6 +1,7 @@
 package main
 
 import (
+	_ "github.com/SmirnovND/metrics/docs"
 	"github.com/SmirnovND/metrics/internal/interfaces"
 	"github.com/SmirnovND/metrics/internal/middleware"
 	"github.com/SmirnovND/metrics/internal/pkg/compressor"
@@ -12,6 +13,7 @@ import (
 	usecase "github.com/SmirnovND/metrics/internal/usecase/server"
 	"github.com/jmoiron/sqlx"
 	"net/http"
+	_ "net/http/pprof"
 )
 
 func main() {
@@ -39,7 +41,7 @@ func Run() error {
 
 	usecase.TimedBackup(cf, storage, db, stopCh)
 	return http.ListenAndServe(cf.GetFlagRunAddr(), middleware.ChainMiddleware(
-		router.Handler(storage, db),
+		router.Handler(storage, db, cf.GetFlagRunAddr()),
 		loggeer.WithLogging,
 		compressor.WithDecompression,
 		compressor.WithCompression,

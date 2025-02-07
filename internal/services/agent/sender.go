@@ -43,7 +43,7 @@ func SendJSON(m *domain.Metrics, serverHost string, key string) {
 	url := fmt.Sprintf("%s/updates/", serverHost)
 
 	for _, v := range m.Data {
-		metrics = append(metrics, v.(*domain.Metric))
+		metrics = append(metrics, v)
 	}
 
 	// Сериализация метрики в JSON

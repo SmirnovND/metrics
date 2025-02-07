@@ -94,11 +94,11 @@ func (s *ServiceBackup) backupToDB() {
 			var delta sql.NullInt64
 			var value sql.NullFloat64
 
-			if metric.Delta != nil {
-				delta = sql.NullInt64{Int64: *metric.Delta, Valid: true}
+			if metric.Delta != 0 {
+				delta = sql.NullInt64{Int64: metric.Delta, Valid: true}
 			}
-			if metric.Value != nil {
-				value = sql.NullFloat64{Float64: *metric.Value, Valid: true}
+			if metric.Value != 0.0 {
+				value = sql.NullFloat64{Float64: metric.Value, Valid: true}
 			}
 
 			_, err := stmt.Exec(metric.ID, metric.MType, value, delta)
@@ -189,12 +189,10 @@ func restoreFromDB(db *sqlx.DB) map[string]domain.MetricInterface {
 		}
 
 		if delta.Valid {
-			deltaValue := delta.Int64
-			metric.Delta = &deltaValue
+			metric.Delta = delta.Int64
 		}
 		if value.Valid {
-			valueValue := value.Float64
-			metric.Value = &valueValue
+			metric.Value = value.Float64
 		}
 
 		collection[id] = metric

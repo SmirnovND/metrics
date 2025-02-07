@@ -7,8 +7,13 @@ import (
 	"time"
 )
 
+// MetricsTracking запускает процесс отслеживания и отправки метрик.
+// - Метрики обновляются с интервалом `PollInterval`.
+// - Отправка метрик на сервер выполняется с интервалом `ReportInterval`.
+// - Функция работает бесконечно, используя `select {}` для блокировки выполнения.
 func MetricsTracking(cf interfaces.ConfigAgent) {
 	metrics := domain.NewMetrics()
+
 	// Тикер для обновления метрик
 	updateTicker := time.NewTicker(time.Second * time.Duration(cf.GetPollInterval()))
 	defer updateTicker.Stop()
