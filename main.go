@@ -1,8 +1,11 @@
 package main
 
 import (
+	"crypto/aes"
+	"crypto/cipher"
 	"crypto/rand"
 	"crypto/rsa"
+	"crypto/sha256"
 	"crypto/x509"
 	"encoding/pem"
 	"fmt"
@@ -21,12 +24,52 @@ func generateKeyPair(bits int) (*rsa.PrivateKey, *rsa.PublicKey, error) {
 	return privKey, pubKey, nil
 }
 
+// Функция для создания AES-GCM ключа из пароля
+func createAESKeyFromPassword(password []byte) ([]byte, error) {
+	// Используем SHA-256 для создания ключа из пароля
+	hash := sha256.Sum256(password)
+	return hash[:], nil
+}
+
+// Функция для шифрования данных с использованием AES-GCM
+func encryptWithAESGCM(data []byte, key []byte) ([]byte, error) {
+	// Генерируем случайный IV (инициализирующий вектор)
+	iv := make([]byte, 12) // Для AES-GCM IV должен быть длиной 12 байт
+	_, err := rand.Read(iv)
+	if err != nil {
+		return nil, fmt.Errorf("failed to generate IV: %v", err)
+	}
+
+	// Создаем объект AES в режиме GCM
+	block, err := aes.NewCipher(key)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create AES cipher: %v", err)
+	}
+
+	gcm, err := cipher.NewGCM(block)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create GCM cipher: %v", err)
+	}
+
+	// Шифруем данные
+	ciphertext := gcm.Seal(nil, iv, data, nil)
+
+	// Возвращаем IV + зашифрованные данные
+	return append(iv, ciphertext...), nil
+}
+
 // Функция для сохранения зашифрованного приватного ключа
 func saveEncryptedPrivateKey(privKey *rsa.PrivateKey, password []byte) error {
 	privKeyBytes := x509.MarshalPKCS1PrivateKey(privKey)
 
-	// Зашифровываем ключ с использованием пароля
-	block, err := x509.EncryptPEMBlock(rand.Reader, "ENCRYPTED PRIVATE KEY", privKeyBytes, password, x509.PEMCipherAES256)
+	// Генерируем AES ключ из пароля
+	aesKey, err := createAESKeyFromPassword(password)
+	if err != nil {
+		return fmt.Errorf("failed to create AES key: %v", err)
+	}
+
+	// Шифруем приватный ключ с использованием AES-GCM
+	encryptedKey, err := encryptWithAESGCM(privKeyBytes, aesKey)
 	if err != nil {
 		return fmt.Errorf("failed to encrypt private key: %v", err)
 	}
@@ -38,7 +81,11 @@ func saveEncryptedPrivateKey(privKey *rsa.PrivateKey, password []byte) error {
 	}
 	defer privKeyFile.Close()
 
-	err = pem.Encode(privKeyFile, block)
+	// Кодируем зашифрованный приватный ключ в PEM формат
+	err = pem.Encode(privKeyFile, &pem.Block{
+		Type:  "ENCRYPTED PRIVATE KEY",
+		Bytes: encryptedKey,
+	})
 	if err != nil {
 		return fmt.Errorf("failed to encode private key: %v", err)
 	}
