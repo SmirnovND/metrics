@@ -1,7 +1,14 @@
 package main
 
 import (
+	"context"
 	"fmt"
+	"net/http"
+	"os"
+	"os/signal"
+	"syscall"
+	"time"
+
 	_ "github.com/SmirnovND/metrics/docs"
 	"github.com/SmirnovND/metrics/internal/interfaces"
 	"github.com/SmirnovND/metrics/internal/middleware"
@@ -13,8 +20,6 @@ import (
 	"github.com/SmirnovND/metrics/internal/router"
 	usecase "github.com/SmirnovND/metrics/internal/usecase/server"
 	"github.com/jmoiron/sqlx"
-	"net/http"
-	_ "net/http/pprof"
 )
 
 var (
@@ -44,26 +49,57 @@ func Run() error {
 		db = d
 	})
 
-	defer usecase.Backup(cf, storage, db)
 	stopCh := make(chan struct{})
 	defer close(stopCh)
 
 	usecase.TimedBackup(cf, storage, db, stopCh)
-	return http.ListenAndServe(cf.GetFlagRunAddr(), middleware.ChainMiddleware(
-		router.Handler(storage, db, cf.GetFlagRunAddr()),
-		loggeer.WithLogging,
-		compressor.WithDecompression,
-		compressor.WithCompression,
-		func(next http.Handler) http.Handler {
-			return crypto.WithCryptoKey(cf, next)
-		},
-		//func(next http.Handler) http.Handler {
-		//	return crypto.WithDecryption(cf.GetCryptoKey(), next) // Расшифровка данных перед валидацией хеша
-		//},
-		func(next http.Handler) http.Handler {
-			return crypto.WithHashMiddleware(cf, next)
-		},
-	))
+
+	server := &http.Server{
+		Addr: cf.GetFlagRunAddr(),
+		Handler: middleware.ChainMiddleware(
+			router.Handler(storage, db, cf.GetFlagRunAddr()),
+			loggeer.WithLogging,
+			compressor.WithDecompression,
+			compressor.WithCompression,
+			func(next http.Handler) http.Handler {
+				return crypto.WithCryptoKey(cf, next)
+			},
+			//func(next http.Handler) http.Handler {
+			//	return crypto.WithDecryption(cf.GetCryptoKey(), next) // Расшифровка данных перед валидацией хеша
+			//},
+			func(next http.Handler) http.Handler {
+				return crypto.WithHashMiddleware(cf, next)
+			},
+		),
+	}
+
+	// Канал для перехвата сигналов
+	sigChan := make(chan os.Signal, 1)
+	signal.Notify(sigChan, syscall.SIGTERM, syscall.SIGINT, syscall.SIGQUIT)
+
+	// Горутина для graceful shutdown
+	go func() {
+		<-sigChan
+		fmt.Println("Получен сигнал завершения, сервер корректно завершает работу...")
+
+		ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+		defer cancel()
+
+		if err := server.Shutdown(ctx); err != nil {
+			fmt.Printf("Ошибка при завершении работы сервера: %v\n", err)
+		}
+
+		usecase.Backup(cf, storage, db) // Сохранение несохраненных данных перед выходом
+	}()
+
+	// Запуск сервера и обработка ошибки завершения
+	err := server.ListenAndServe()
+	if err != nil && err != http.ErrServerClosed {
+		return fmt.Errorf("ошибка при запуске сервера: %w", err)
+	}
+
+	fmt.Println("Сервер завершил работу.")
+	return nil
 }
 
 // printBuildInfo выводит информацию о версии сборки
