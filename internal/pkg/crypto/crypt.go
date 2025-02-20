@@ -8,7 +8,6 @@ import (
 	"encoding/pem"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"log"
 	"net/http"
 	"os"
@@ -23,7 +22,7 @@ func loadPrivateKeyWithPassword(filename, password string) (*rsa.PrivateKey, err
 	}
 	defer keyFile.Close()
 
-	keyBytes, err := ioutil.ReadAll(keyFile)
+	keyBytes, err := io.ReadAll(keyFile)
 	if err != nil {
 		return nil, fmt.Errorf("unable to read private key file: %v", err)
 	}

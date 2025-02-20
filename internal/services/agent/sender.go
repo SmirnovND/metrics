@@ -13,7 +13,6 @@ import (
 	"fmt"
 	"github.com/SmirnovND/metrics/internal/domain"
 	"io"
-	"io/ioutil"
 	"net/http"
 	"os"
 )
@@ -83,7 +82,7 @@ func loadPublicKey() (*rsa.PublicKey, error) {
 	}
 	defer pubKeyFile.Close()
 
-	pubKeyBytes, err := ioutil.ReadAll(pubKeyFile)
+	pubKeyBytes, err := io.ReadAll(pubKeyFile)
 	if err != nil {
 		return nil, fmt.Errorf("unable to read public key file: %v", err)
 	}
