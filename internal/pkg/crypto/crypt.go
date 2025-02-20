@@ -33,18 +33,25 @@ func loadPrivateKeyWithPassword(filename, password string) (*rsa.PrivateKey, err
 		return nil, fmt.Errorf("failed to decode PEM block containing private key")
 	}
 
-	// Расшифровка с паролем, если необходимо
-	var privKey *rsa.PrivateKey
-	if x509.IsEncryptedPEMBlock(block) {
-		decryptedBytes, err := x509.DecryptPEMBlock(block, []byte(password))
+	// Проверяем, зашифрован ли ключ
+	if block.Type == "ENCRYPTED PRIVATE KEY" {
+		// Парсинг приватного ключа с использованием пароля
+		privKey, err := x509.ParsePKCS8PrivateKey(block.Bytes)
 		if err != nil {
-			return nil, fmt.Errorf("failed to decrypt private key: %v", err)
+			return nil, fmt.Errorf("failed to parse encrypted private key: %v", err)
 		}
-		block.Bytes = decryptedBytes
+
+		// Преобразуем ключ в тип *rsa.PrivateKey
+		switch key := privKey.(type) {
+		case *rsa.PrivateKey:
+			return key, nil
+		default:
+			return nil, fmt.Errorf("unsupported key type: %T", key)
+		}
 	}
 
-	// Парсинг приватного ключа
-	privKey, err = x509.ParsePKCS1PrivateKey(block.Bytes)
+	// Если ключ не зашифрован, парсим его как обычный PKCS#1
+	privKey, err := x509.ParsePKCS1PrivateKey(block.Bytes)
 	if err != nil {
 		return nil, fmt.Errorf("failed to parse private key: %v", err)
 	}
@@ -53,19 +60,19 @@ func loadPrivateKeyWithPassword(filename, password string) (*rsa.PrivateKey, err
 }
 
 func decryptPrivateKey(encryptedData []byte, password []byte) (*rsa.PrivateKey, error) {
-	// Расшифровываем с использованием пароля
-	decryptedKey, err := x509.DecryptPEMBlock(&pem.Block{Bytes: encryptedData}, password)
+	// Парсинг приватного ключа с использованием пароля
+	privKey, err := x509.ParsePKCS8PrivateKey(encryptedData)
 	if err != nil {
-		return nil, fmt.Errorf("failed to decrypt PEM block: %v", err)
+		return nil, fmt.Errorf("failed to parse encrypted private key: %v", err)
 	}
 
-	// Парсим приватный ключ в формате PKCS#1
-	privKey, err := x509.ParsePKCS1PrivateKey(decryptedKey)
-	if err != nil {
-		return nil, fmt.Errorf("failed to parse private key: %v", err)
+	// Преобразуем ключ в тип *rsa.PrivateKey
+	switch key := privKey.(type) {
+	case *rsa.PrivateKey:
+		return key, nil
+	default:
+		return nil, fmt.Errorf("unsupported key type: %T", key)
 	}
-
-	return privKey, nil
 }
 
 // WithDecryption - Middleware для расшифровки данных с логированием
