@@ -5,7 +5,7 @@ import (
 	"flag"
 	"fmt"
 	"github.com/SmirnovND/metrics/internal/interfaces"
-	"io/ioutil"
+	"io"
 	"os"
 	"strconv"
 	"time"
@@ -109,7 +109,7 @@ func NewConfigCommand() (cf interfaces.ConfigServerInterface) {
 		}
 		defer file.Close()
 
-		data, err := ioutil.ReadAll(file)
+		data, err := io.ReadAll(file)
 		if err != nil {
 			fmt.Println("Ошибка чтения файла конфигурации:", err)
 			return nil
