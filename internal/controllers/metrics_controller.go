@@ -2,17 +2,17 @@ package controllers
 
 import (
 	_ "github.com/SmirnovND/metrics/internal/domain"
+	"github.com/SmirnovND/metrics/internal/interfaces"
 	"github.com/SmirnovND/metrics/internal/pkg/paramsparser"
-	"github.com/SmirnovND/metrics/internal/services/server"
 	serverSaver "github.com/SmirnovND/metrics/internal/usecase/server"
 	"net/http"
 )
 
 type MetricsController struct {
-	ServiceCollector *server.ServiceCollector
+	ServiceCollector interfaces.ServiceCollectorInterface
 }
 
-func NewMetricsController(serviceCollector *server.ServiceCollector) *MetricsController {
+func NewMetricsController(serviceCollector interfaces.ServiceCollectorInterface) *MetricsController {
 	return &MetricsController{
 		ServiceCollector: serviceCollector,
 	}
@@ -63,7 +63,7 @@ func (mc *MetricsController) HandleUpdateJSON(w http.ResponseWriter, r *http.Req
 	w.Write(JSONResponse)
 }
 
-// @HandleUpdateJson Обновление метрик
+// @HandleUpdatesJSON Обновление метрик
 // @Description Обновляет массив метрик на основе JSON тела запроса
 // @Tags Update
 // @Accept application/json
@@ -132,7 +132,7 @@ func (mc *MetricsController) HandleRoot(w http.ResponseWriter, r *http.Request) 
 	w.WriteHeader(http.StatusOK)
 }
 
-// @HandlePostValue Получение метрики по данным в теле запроса
+// @HandleValueJSON Получение метрики по данным в теле запроса
 // @Description Принимает метрику без значения и возвращает тот же объект метрики с значением
 // @Tags Update
 // @Accept application/json

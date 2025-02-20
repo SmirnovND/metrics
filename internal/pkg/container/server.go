@@ -13,7 +13,7 @@ import (
 
 type Option func(*Container)
 
-func WithStartCollectionFunc(f func(cf interfaces.ConfigServer, db *sqlx.DB) map[string]domain.MetricInterface) Option {
+func WithStartCollectionFunc(f func(cf interfaces.ConfigServerInterface, db *sqlx.DB) map[string]domain.MetricInterface) Option {
 	return func(c *Container) {
 		c.startCollectionFunc = f
 	}
@@ -22,7 +22,7 @@ func WithStartCollectionFunc(f func(cf interfaces.ConfigServer, db *sqlx.DB) map
 // Container - структура контейнера, обертывающая dig-контейнер
 type Container struct {
 	container           *dig.Container
-	startCollectionFunc func(cf interfaces.ConfigServer, db *sqlx.DB) map[string]domain.MetricInterface
+	startCollectionFunc func(cf interfaces.ConfigServerInterface, db *sqlx.DB) map[string]domain.MetricInterface
 }
 
 func NewContainer(opts ...Option) *Container {
@@ -43,8 +43,8 @@ func (c *Container) provideDependencies() {
 	c.container.Provide(db.NewDB)
 
 	// Регистрируем репозиторий, передав конфигурацию
-	c.container.Provide(func(cf interfaces.ConfigServer, db *sqlx.DB) *repo.MemStorage {
-		return repo.NewMetricRepo(c.startCollectionFunc(cf, db))
+	c.container.Provide(func(cf interfaces.ConfigServerInterface, db *sqlx.DB) *repo.MemStorage {
+		return repo.NewMetricRepo(c.startCollectionFunc(cf, db)).(*repo.MemStorage)
 	})
 }
 
