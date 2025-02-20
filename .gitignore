@@ -26,3 +26,5 @@ vendor/
 /devopstest-darwin-amd64
 /metricstest-darwin-amd64
 /docker/postgres/data/
+
+.cert
