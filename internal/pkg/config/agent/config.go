@@ -20,6 +20,7 @@ type Config struct {
 	ServerHost     string `yaml:"serverHost"`
 	Key            string `yaml:"key"`
 	RateLimit      int    `yaml:"rateLimit"`
+	CryptoKey      string
 }
 
 func (c *Config) GetReportInterval() int {
@@ -39,6 +40,9 @@ func (c *Config) GetKey() string {
 func (c *Config) GetRateLimit() int {
 	return c.RateLimit
 }
+func (c *Config) GetCryptoKey() string {
+	return c.CryptoKey
+}
 
 func NewConfigCommand() (cf interfaces.ConfigAgent) {
 	config := new(Config)
@@ -48,6 +52,7 @@ func NewConfigCommand() (cf interfaces.ConfigAgent) {
 	flag.IntVar(&config.PollInterval, "p", pollInterval, "poll interval")
 	flag.StringVar(&config.Key, "k", "", "key")
 	flag.IntVar(&config.RateLimit, "l", rateLimit, "rateLimit")
+	flag.StringVar(&config.CryptoKey, "crypto-key", "", "crypto-key")
 
 	flag.Parse()
 
@@ -78,6 +83,10 @@ func NewConfigCommand() (cf interfaces.ConfigAgent) {
 		if err == nil {
 			config.RateLimit = envRateLimit
 		}
+	}
+
+	if envCryptoKey := os.Getenv("CRYPTO_KEY"); envCryptoKey != "" {
+		config.CryptoKey = envCryptoKey
 	}
 
 	config.ServerHost = fmt.Sprintf("http://%s", config.ServerHost)

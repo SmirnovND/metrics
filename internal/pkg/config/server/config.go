@@ -17,6 +17,7 @@ type Config struct {
 	FlagRunAddr     string
 	DBDsn           string
 	Key             string
+	CryptoKey       string
 }
 
 func (c *Config) GetStoreInterval() time.Duration {
@@ -41,6 +42,9 @@ func (c *Config) GetDBDsn() string {
 func (c *Config) GetKey() string {
 	return c.Key
 }
+func (c *Config) GetCryptoKey() string {
+	return c.CryptoKey
+}
 
 func NewConfigCommand() (cf interfaces.ConfigServerInterface) {
 	config := new(Config)
@@ -51,6 +55,7 @@ func NewConfigCommand() (cf interfaces.ConfigServerInterface) {
 	flag.BoolVar(&config.Restore, "r", true, "Restore")
 	flag.StringVar(&config.FlagRunAddr, "a", "localhost:8080", "address and port to run server")
 	flag.StringVar(&config.Key, "k", "", "key")
+	flag.StringVar(&config.CryptoKey, "crypto-key", "", "crypto-key")
 
 	flag.Parse()
 
@@ -82,6 +87,10 @@ func NewConfigCommand() (cf interfaces.ConfigServerInterface) {
 
 	if envKey := os.Getenv("KEY"); envKey != "" {
 		config.Key = envKey
+	}
+
+	if envCryptoKey := os.Getenv("CRYPTO_KEY"); envCryptoKey != "" {
+		config.CryptoKey = envCryptoKey
 	}
 
 	return config

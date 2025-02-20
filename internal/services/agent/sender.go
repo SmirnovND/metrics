@@ -3,10 +3,12 @@ package agent
 import (
 	"bytes"
 	"compress/gzip"
+	"crypto/rand"
+	"encoding/base64"
 	"encoding/json"
 	"fmt"
 	"github.com/SmirnovND/metrics/internal/domain"
-	"github.com/SmirnovND/metrics/internal/pkg/crypto"
+	cryptoPkg "github.com/SmirnovND/metrics/internal/pkg/crypto"
 	"io"
 	"net/http"
 )
@@ -35,10 +37,10 @@ func Send(m *domain.Metrics, serverHost string) {
 	}
 }
 
-// SendJSON Метод для отправки метрик
-func SendJSON(m *domain.Metrics, serverHost string, key string) {
-	m.Mu.RLock()         // Блокируем доступ к мапе
-	defer m.Mu.RUnlock() // Освобождаем доступ после обновления
+func SendJSON(m *domain.Metrics, serverHost string, key string, cryptoKeyPath string) {
+	m.Mu.RLock()
+	defer m.Mu.RUnlock()
+
 	var metrics []*domain.Metric
 	url := fmt.Sprintf("%s/updates/", serverHost)
 
@@ -53,13 +55,62 @@ func SendJSON(m *domain.Metrics, serverHost string, key string) {
 		return
 	}
 
-	// Создание HTTP-запроса
-	req, err := http.NewRequest("POST", url, bytes.NewBuffer(jsonData))
+	// Загрузка публичного ключа
+	publicKey, err := cryptoPkg.LoadPublicKey(cryptoKeyPath)
 	if err != nil {
-		fmt.Println("Error creating request:", err)
+		fmt.Println("Ошибка загрузки публичного ключа:", err)
 		return
 	}
-	crypto.SetSignature(req, jsonData, key)
+
+	// Генерация симметричного ключа AES для шифрования данных
+	aesKey := make([]byte, 32)
+	_, err = rand.Read(aesKey)
+	if err != nil {
+		fmt.Println("Ошибка при генерации AES-ключа:", err)
+		return
+	}
+
+	// Шифрование данных с использованием AES
+	encryptedData, err := cryptoPkg.EncryptAES(jsonData, aesKey)
+	if err != nil {
+		fmt.Println("Ошибка при шифровании данных AES:", err)
+		return
+	}
+
+	// Шифрование AES-ключа с использованием RSA
+	encryptedKey, err := cryptoPkg.EncryptRSA(publicKey, aesKey)
+	if err != nil {
+		fmt.Println("Ошибка при шифровании ключа RSA:", err)
+		return
+	}
+
+	// Создание структуры для отправки
+	payload := struct {
+		Key       string `json:"key"`
+		Nonce     string `json:"nonce"`
+		Data      string `json:"data"`
+		Signature string `json:"signature"`
+	}{
+		Key:       base64.StdEncoding.EncodeToString(encryptedKey),
+		Nonce:     "", // Удалил nonce, так как его нет
+		Data:      base64.StdEncoding.EncodeToString(encryptedData),
+		Signature: cryptoPkg.GenerateSignature(jsonData, key),
+	}
+
+	// Сериализация в JSON
+	payloadData, err := json.Marshal(payload)
+	if err != nil {
+		fmt.Println("Ошибка при сериализации payload:", err)
+		return
+	}
+
+	// Создание HTTP-запроса
+	req, err := http.NewRequest("POST", url, bytes.NewBuffer(payloadData))
+	if err != nil {
+		fmt.Println("Ошибка при создании запроса:", err)
+		return
+	}
+
 	req.Header.Set("Content-Type", "application/json")
 
 	err = baseSend(req, true)
@@ -99,7 +150,7 @@ func baseSend(req *http.Request, enableCompression bool) error {
 	if resp.StatusCode == http.StatusOK {
 		fmt.Println("MetricInterface sent successfully")
 	} else {
-		fmt.Printf("Failed to send metric")
+		fmt.Printf("Failed to send metric: code - %d \n", resp.StatusCode)
 	}
 
 	return nil

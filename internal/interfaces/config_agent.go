@@ -6,4 +6,5 @@ type ConfigAgent interface {
 	GetServerHost() string
 	GetKey() string
 	GetRateLimit() int
+	GetCryptoKey() string
 }

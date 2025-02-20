@@ -9,4 +9,5 @@ type ConfigServerInterface interface {
 	GetFlagRunAddr() string
 	GetDBDsn() string
 	GetKey() string
+	GetCryptoKey() string
 }
