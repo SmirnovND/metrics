@@ -13,6 +13,11 @@ type ConfigServer struct {
 	mock.Mock
 }
 
+func (_m *ConfigServer) GetCryptoKey() string {
+	//TODO implement me
+	panic("implement me")
+}
+
 // GetDBDsn provides a mock function with no fields
 func (_m *ConfigServer) GetDBDsn() string {
 	ret := _m.Called()
