@@ -57,9 +57,9 @@ func Run() error {
 		func(next http.Handler) http.Handler {
 			return crypto.WithCryptoKey(cf, next)
 		},
-		func(next http.Handler) http.Handler {
-			return crypto.WithDecryption(cf.GetCryptoKey(), next) // Расшифровка данных перед валидацией хеша
-		},
+		//func(next http.Handler) http.Handler {
+		//	return crypto.WithDecryption(cf.GetCryptoKey(), next) // Расшифровка данных перед валидацией хеша
+		//},
 		func(next http.Handler) http.Handler {
 			return crypto.WithHashMiddleware(cf, next)
 		},
