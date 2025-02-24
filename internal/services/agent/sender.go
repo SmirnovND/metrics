@@ -3,18 +3,12 @@ package agent
 import (
 	"bytes"
 	"compress/gzip"
-	"crypto/aes"
-	"crypto/cipher"
-	"crypto/rand"
-	"crypto/rsa"
-	"crypto/x509"
 	"encoding/json"
-	"encoding/pem"
 	"fmt"
 	"github.com/SmirnovND/metrics/internal/domain"
+	"github.com/SmirnovND/metrics/internal/pkg/crypto"
 	"io"
 	"net/http"
-	"os"
 )
 
 // Send Метод для отправки метрик
@@ -41,77 +35,6 @@ func Send(m *domain.Metrics, serverHost string) {
 	}
 }
 
-// Генерация случайного симметричного ключа для AES
-func generateAESKey() ([]byte, error) {
-	key := make([]byte, 32) // 256 бит для AES
-	_, err := rand.Read(key)
-	if err != nil {
-		return nil, fmt.Errorf("failed to generate AES key: %v", err)
-	}
-	return key, nil
-}
-
-// Шифрование данных с использованием AES
-func encryptAES(plainText []byte, key []byte) ([]byte, error) {
-	block, err := aes.NewCipher(key)
-	if err != nil {
-		return nil, fmt.Errorf("failed to create AES cipher: %v", err)
-	}
-
-	// Инициализация вектора (IV) для AES
-	ciphertext := make([]byte, aes.BlockSize+len(plainText))
-	iv := ciphertext[:aes.BlockSize]
-	_, err = rand.Read(iv)
-	if err != nil {
-		return nil, fmt.Errorf("failed to generate IV: %v", err)
-	}
-
-	// Шифрование данных
-	stream := cipher.NewCFBEncrypter(block, iv)
-	stream.XORKeyStream(ciphertext[aes.BlockSize:], plainText)
-
-	return ciphertext, nil
-}
-
-// Загрузка публичного ключа из файла в формате PKIX
-func loadPublicKey() (*rsa.PublicKey, error) {
-	// Чтение публичного ключа из файла
-	pubKeyFile, err := os.Open(".cert/public_key.pem")
-	if err != nil {
-		return nil, fmt.Errorf("unable to open public key file: %v", err)
-	}
-	defer pubKeyFile.Close()
-
-	pubKeyBytes, err := io.ReadAll(pubKeyFile)
-	if err != nil {
-		return nil, fmt.Errorf("unable to read public key file: %v", err)
-	}
-
-	// Декодируем PEM данные
-	block, _ := pem.Decode(pubKeyBytes)
-	if block == nil {
-		return nil, fmt.Errorf("failed to decode PEM block containing public key")
-	}
-
-	// Парсим публичный ключ с использованием PKCS1 формата
-	pubKey, err := x509.ParsePKCS1PublicKey(block.Bytes)
-	if err != nil {
-		return nil, fmt.Errorf("failed to parse public key: %v", err)
-	}
-
-	// Преобразуем в rsa.PublicKey, если это возможно
-	return pubKey, nil
-}
-
-// Шифрование симметричного ключа с использованием RSA
-func encryptRSA(publicKey *rsa.PublicKey, data []byte) ([]byte, error) {
-	encryptedData, err := rsa.EncryptPKCS1v15(rand.Reader, publicKey, data)
-	if err != nil {
-		return nil, fmt.Errorf("failed to encrypt with RSA: %v", err)
-	}
-	return encryptedData, nil
-}
-
 // SendJSON метод для отправки метрик с шифрованием
 func SendJSON(m *domain.Metrics, serverHost string, key string) {
 	m.Mu.RLock()
@@ -130,49 +53,53 @@ func SendJSON(m *domain.Metrics, serverHost string, key string) {
 		return
 	}
 
-	//// Генерация симметричного ключа AES
-	//aesKey, err := generateAESKey()
-	//if err != nil {
-	//	fmt.Println("Ошибка при генерации AES ключа:", err)
-	//	return
-	//}
-	//
-	//// Шифрование данных с использованием AES
-	//encryptedData, err := encryptAES(jsonData, aesKey)
-	//if err != nil {
-	//	fmt.Println("Ошибка при шифровании данных:", err)
-	//	return
-	//}
-	//
-	//// Загрузка публичного ключа для шифрования AES ключа
-	//pubKey, err := loadPublicKey()
-	//if err != nil {
-	//	fmt.Println("Ошибка при загрузке публичного ключа:", err)
-	//	return
-	//}
+	// 2. Генерация AES-ключа
+	aesKey, err := crypto.GenerateAESKey()
+	if err != nil {
+		fmt.Println("Ошибка генерации AES-ключа:", err)
+		return
+	}
 
-	//// Шифрование AES ключа с использованием RSA
-	//encryptedAESKey, err := encryptRSA(pubKey, aesKey)
-	//if err != nil {
-	//	fmt.Println("Ошибка при шифровании AES ключа:", err)
-	//	return
-	//}
-	//
-	//// Кодирование зашифрованного AES ключа в Base64
-	//encodedAESKey := base64.StdEncoding.EncodeToString(encryptedAESKey)
+	// 3. Шифрование JSON с помощью AES
+	encryptedData, err := crypto.EncryptAES(jsonData, aesKey)
+	if err != nil {
+		fmt.Println("Ошибка шифрования AES:", err)
+		return
+	}
+
+	// 4. Загрузка публичного RSA-ключа
+	publicKey, err := crypto.LoadPublicKey(key)
+	if err != nil {
+		fmt.Println("Ошибка загрузки публичного ключа:", err)
+		return
+	}
+
+	// 5. Шифрование AES-ключа с помощью RSA
+	encryptedAESKey, err := crypto.EncryptAESKey(aesKey, publicKey)
+	if err != nil {
+		fmt.Println("Ошибка шифрования AES-ключа:", err)
+		return
+	}
+
+	// 6. Формирование запроса
+	requestPayload := map[string]string{
+		"key":  encryptedAESKey,
+		"data": encryptedData,
+	}
+
+	finalJSON, err := json.Marshal(requestPayload)
+	if err != nil {
+		fmt.Println("Ошибка сериализации запроса:", err)
+		return
+	}
 
 	// Создание HTTP-запроса
-	req, err := http.NewRequest("POST", url, bytes.NewBuffer(jsonData))
+	req, err := http.NewRequest("POST", url, bytes.NewBuffer(finalJSON))
 	if err != nil {
 		fmt.Println("Error creating request:", err)
 		return
 	}
 
-	//// Добавление зашифрованного и закодированного AES ключа в заголовок
-	//req.Header.Set("X-Aes-Key", encodedAESKey)
-
-	// Установка подписи для запроса
-	//crypto.SetSignature(req, encryptedData, key)
 	req.Header.Set("Content-Type", "application/json")
 
 	err = baseSend(req, true)

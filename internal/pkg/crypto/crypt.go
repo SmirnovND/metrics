@@ -2,140 +2,215 @@ package crypto
 
 import (
 	"bytes"
+	"crypto/aes"
+	"crypto/cipher"
 	"crypto/rand"
 	"crypto/rsa"
 	"crypto/x509"
+	"encoding/base64"
+	"encoding/json"
 	"encoding/pem"
+	"errors"
 	"fmt"
 	"io"
-	"log"
 	"net/http"
 	"os"
 )
 
-// Загрузка приватного ключа с паролем
-func loadPrivateKeyWithPassword(filename, password string) (*rsa.PrivateKey, error) {
-	// Чтение закрытого ключа из файла
-	keyFile, err := os.Open(filename)
+// Расшифровка AES-ключа с помощью RSA
+func decryptAESKey(encryptedKey string, privateKey *rsa.PrivateKey) ([]byte, error) {
+	decodedKey, err := base64.StdEncoding.DecodeString(encryptedKey)
 	if err != nil {
-		return nil, fmt.Errorf("unable to open private key file: %v", err)
-	}
-	defer keyFile.Close()
-
-	keyBytes, err := io.ReadAll(keyFile)
-	if err != nil {
-		return nil, fmt.Errorf("unable to read private key file: %v", err)
+		fmt.Println(err.Error())
+		return nil, err
 	}
 
-	// Декодирование PEM данных
-	block, _ := pem.Decode(keyBytes)
+	return rsa.DecryptPKCS1v15(rand.Reader, privateKey, decodedKey)
+}
+
+// Расшифровка JSON с помощью AES
+func decryptAES(encryptedData string, key []byte) ([]byte, error) {
+	data, err := base64.StdEncoding.DecodeString(encryptedData)
+	if err != nil {
+		return nil, err
+	}
+
+	block, err := aes.NewCipher(key)
+	if err != nil {
+		return nil, err
+	}
+
+	iv := data[:aes.BlockSize]
+	ciphertext := data[aes.BlockSize:]
+
+	mode := cipher.NewCBCDecrypter(block, iv)
+	mode.CryptBlocks(ciphertext, ciphertext)
+
+	return ciphertext, nil
+}
+
+// WithDecryption — middleware для расшифровки данных запроса
+func WithDecryption(privateKey *rsa.PrivateKey) func(http.Handler) http.Handler {
+	return func(next http.Handler) http.Handler {
+		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			// Читаем зашифрованные данные из тела запроса
+			encryptedBody, err := io.ReadAll(r.Body)
+			if err != nil {
+				fmt.Println("Ошибка чтения тела запроса")
+				http.Error(w, "Ошибка чтения тела запроса", http.StatusBadRequest)
+				return
+			}
+			r.Body.Close() // Закрываем исходное тело
+
+			// Разбираем JSON: {"aes_key": "...", "data": "..."}
+			payload, err := parseEncryptedPayload(encryptedBody)
+			if err != nil {
+				fmt.Println("Ошибка парсинга зашифрованного JSON")
+				http.Error(w, "Ошибка парсинга зашифрованного JSON", http.StatusBadRequest)
+				return
+			}
+
+			// Расшифровываем AES-ключ с помощью приватного RSA-ключа
+			aesKey, err := decryptAESKey(payload.AESKey, privateKey)
+			if err != nil {
+				fmt.Println("Ошибка расшифровки AES-ключа", err)
+				http.Error(w, "Ошибка расшифровки AES-ключа", http.StatusInternalServerError)
+				return
+			}
+
+			// Расшифровываем данные с помощью AES
+			decryptedData, err := decryptAES(payload.Data, aesKey)
+			if err != nil {
+				fmt.Println("Ошибка расшифровки данных")
+				http.Error(w, "Ошибка расшифровки данных", http.StatusInternalServerError)
+				return
+			}
+
+			// Подменяем тело запроса расшифрованными данными
+			r.Body = io.NopCloser(bytes.NewReader(decryptedData))
+			r.ContentLength = int64(len(decryptedData))
+			fmt.Println("----------------------4444")
+			// Передаем управление следующему middleware
+			next.ServeHTTP(w, r)
+		})
+	}
+}
+
+// parseEncryptedPayload парсит входные зашифрованные данные
+func parseEncryptedPayload(data []byte) (struct {
+	AESKey string `json:"aes_key"`
+	Data   string `json:"data"`
+}, error) {
+	var payload struct {
+		AESKey string `json:"aes_key"`
+		Data   string `json:"data"`
+	}
+	err := json.Unmarshal(data, &payload)
+	return payload, err
+}
+
+// LoadPrivateKey загружает приватный RSA-ключ из файла
+func LoadPrivateKey(filename string) (*rsa.PrivateKey, error) {
+	// Читаем содержимое файла
+	keyData, err := os.ReadFile(filename)
+	if err != nil {
+		return nil, err
+	}
+
+	// Разбираем PEM-блок
+	block, _ := pem.Decode(keyData)
 	if block == nil {
-		return nil, fmt.Errorf("failed to decode PEM block containing private key")
+		return nil, errors.New("не удалось декодировать PEM-блок")
 	}
 
-	// Проверяем, зашифрован ли ключ
-	if block.Type == "ENCRYPTED PRIVATE KEY" {
-		// Парсинг приватного ключа с использованием пароля
-		privKey, err := x509.ParsePKCS8PrivateKey(block.Bytes)
-		if err != nil {
-			return nil, fmt.Errorf("failed to parse encrypted private key: %v", err)
-		}
-
-		// Преобразуем ключ в тип *rsa.PrivateKey
-		switch key := privKey.(type) {
-		case *rsa.PrivateKey:
-			return key, nil
-		default:
-			return nil, fmt.Errorf("unsupported key type: %T", key)
-		}
-	}
-
-	// Если ключ не зашифрован, парсим его как обычный PKCS#1
-	privKey, err := x509.ParsePKCS1PrivateKey(block.Bytes)
+	// Парсим приватный ключ в формате PKCS#1 или PKCS#8
+	privateKey, err := x509.ParsePKCS1PrivateKey(block.Bytes)
 	if err != nil {
-		return nil, fmt.Errorf("failed to parse private key: %v", err)
+		privateKeyPKCS8, err := x509.ParsePKCS8PrivateKey(block.Bytes)
+		if err != nil {
+			return nil, errors.New("не удалось разобрать приватный ключ: " + err.Error())
+		}
+		privateKey, ok := privateKeyPKCS8.(*rsa.PrivateKey)
+		if !ok {
+			return nil, errors.New("ключ не является RSA-ключом")
+		}
+		return privateKey, nil
 	}
 
-	return privKey, nil
+	return privateKey, nil
 }
 
-func decryptPrivateKey(encryptedData []byte, password []byte) (*rsa.PrivateKey, error) {
-	// Парсинг приватного ключа с использованием пароля
-	privKey, err := x509.ParsePKCS8PrivateKey(encryptedData)
-	if err != nil {
-		return nil, fmt.Errorf("failed to parse encrypted private key: %v", err)
-	}
-
-	// Преобразуем ключ в тип *rsa.PrivateKey
-	switch key := privKey.(type) {
-	case *rsa.PrivateKey:
-		return key, nil
-	default:
-		return nil, fmt.Errorf("unsupported key type: %T", key)
-	}
+// Генерация случайного AES-ключа (32 байта для AES-256)
+func GenerateAESKey() ([]byte, error) {
+	key := make([]byte, 32)
+	_, err := io.ReadFull(rand.Reader, key)
+	return key, err
 }
 
-// WithDecryption - Middleware для расшифровки данных с логированием
-func WithDecryption(key string, next http.Handler) http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		// Логируем начало обработки запроса
-		log.Println("Starting decryption middleware")
+// AES-шифрование данных
+func EncryptAES(data []byte, key []byte) (string, error) {
+	block, err := aes.NewCipher(key)
+	if err != nil {
+		return "", err
+	}
 
-		// Загружаем приватный ключ
-		privKey, err := loadPrivateKeyWithPassword(".cert/encrypted_private_key.pem", "secretkey")
-		if err != nil {
-			log.Printf("Error loading private key: %v\n", err)
-			http.Error(w, "Private key loading error", http.StatusInternalServerError)
-			return
-		}
-		log.Println("Private key loaded successfully")
+	// Генерируем IV (инициализационный вектор)
+	iv := make([]byte, aes.BlockSize)
+	_, err = io.ReadFull(rand.Reader, iv)
+	if err != nil {
+		return "", err
+	}
 
-		// Чтение зашифрованных данных из тела запроса
-		encryptedData, err := io.ReadAll(r.Body)
-		if err != nil {
-			log.Printf("Error reading request body: %v\n", err)
-			http.Error(w, "Error reading request body", http.StatusBadRequest)
-			return
-		}
-		log.Println("Encrypted data read successfully, length:", len(encryptedData))
+	// Шифрование в режиме CBC
+	mode := cipher.NewCBCEncrypter(block, iv)
+	paddedData := pkcs7Padding(data, aes.BlockSize)
+	ciphertext := make([]byte, len(paddedData))
+	mode.CryptBlocks(ciphertext, paddedData)
 
-		// Расшифровка данных
-		decryptedData, err := DecryptWithRSA(privKey, encryptedData)
-		if err != nil {
-			log.Printf("Error during decryption: %v\n", err)
-			http.Error(w, "Decryption error", http.StatusInternalServerError)
-			return
-		}
-		log.Println("Data decrypted successfully, length:", len(decryptedData))
-
-		// Возвращаем расшифрованные данные в запрос
-		r.Body = io.NopCloser(bytes.NewReader(decryptedData))
-		r.ContentLength = int64(len(decryptedData))
-
-		// Логируем продолжение выполнения запроса
-		log.Println("Passing control to the next handler")
-		next.ServeHTTP(w, r)
-
-		// Логируем успешную обработку запроса
-		log.Println("Decryption middleware processed the request successfully")
-	})
+	// Объединяем IV + зашифрованный текст
+	encryptedData := append(iv, ciphertext...)
+	return base64.StdEncoding.EncodeToString(encryptedData), nil
 }
 
-// Функция для расшифровки данных с использованием RSA приватного ключа
-func DecryptWithRSA(privKey *rsa.PrivateKey, encryptedData []byte) ([]byte, error) {
-	decryptedData, err := rsa.DecryptPKCS1v15(rand.Reader, privKey, encryptedData)
-	if err != nil {
-		return nil, fmt.Errorf("decryption failed: %v", err)
-	}
-	return decryptedData, nil
+// PKCS7 padding (дополнение до размера блока)
+func pkcs7Padding(data []byte, blockSize int) []byte {
+	padding := blockSize - len(data)%blockSize
+	padText := bytes.Repeat([]byte{byte(padding)}, padding)
+	return append(data, padText...)
 }
 
-// Функция для шифрования данных с использованием публичного RSA ключа
-func EncryptWithRSA(pubKey *rsa.PublicKey, data []byte) ([]byte, error) {
-	// Шифруем данные с использованием публичного ключа
-	encryptedData, err := rsa.EncryptPKCS1v15(rand.Reader, pubKey, data)
+// Функция загрузки публичного RSA-ключа
+func LoadPublicKey(filename string) (*rsa.PublicKey, error) {
+	keyData, err := os.ReadFile(filename)
 	if err != nil {
-		return nil, fmt.Errorf("encryption failed: %v", err)
+		return nil, err
 	}
-	return encryptedData, nil
+
+	block, _ := pem.Decode(keyData)
+	if block == nil {
+		return nil, fmt.Errorf("не удалось декодировать PEM")
+	}
+
+	// Используем ParsePKIXPublicKey вместо ParsePKCS1PublicKey
+	parsedKey, err := x509.ParsePKIXPublicKey(block.Bytes)
+	if err != nil {
+		return nil, err
+	}
+
+	// Приводим к типу *rsa.PublicKey
+	pubKey, ok := parsedKey.(*rsa.PublicKey)
+	if !ok {
+		return nil, fmt.Errorf("неверный тип ключа, ожидался *rsa.PublicKey")
+	}
+
+	return pubKey, nil
+}
+
+// RSA-шифрование AES-ключа
+func EncryptAESKey(aesKey []byte, publicKey *rsa.PublicKey) (string, error) {
+	encryptedKey, err := rsa.EncryptPKCS1v15(rand.Reader, publicKey, aesKey)
+	if err != nil {
+		return "", err
+	}
+	return base64.StdEncoding.EncodeToString(encryptedKey), nil
 }
