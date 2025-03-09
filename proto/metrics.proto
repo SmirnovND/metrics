@@ -1,0 +1,24 @@
+syntax = "proto3";
+
+package metrics;
+
+option go_package = "github.com/SmirnovND/metrics/pb";
+
+service MetricsService {
+rpc SendMetrics(MetricsRequest) returns (MetricsResponse);
+}
+
+message Metric {
+string id = 1;       // Имя метрики
+string type = 2;     // "gauge" или "counter"
+double value = 3;    // Для gauge
+int64 delta = 4;     // Для counter
+}
+
+message MetricsRequest {
+repeated Metric metrics = 1;
+}
+
+message MetricsResponse {
+string status = 1;
+}
