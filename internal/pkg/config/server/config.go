@@ -21,6 +21,7 @@ type Config struct {
 	DBDsn           string `json:"database_dsn"`
 	Key             string `json:"key"`
 	CryptoKey       string `json:"crypto_key"`
+	GRPCAddr        string `json:"grpc_addr"`
 }
 
 func (c *Config) GetStoreInterval() time.Duration {
@@ -37,6 +38,10 @@ func (c *Config) IsRestore() bool {
 
 func (c *Config) GetFlagRunAddr() string {
 	return c.FlagRunAddr
+}
+
+func (c *Config) GetGRPCAddr() string {
+	return c.GRPCAddr
 }
 
 func (c *Config) GetDBDsn() string {
@@ -59,6 +64,7 @@ func NewConfigCommand() (cf interfaces.ConfigServerInterface) {
 	flag.StringVar(&config.FileStoragePath, "f", "./internal/resource/storage.json", "file storage path")
 	flag.BoolVar(&config.Restore, "r", true, "Restore")
 	flag.StringVar(&config.FlagRunAddr, "a", "localhost:8080", "address and port to run server")
+	flag.StringVar(&config.GRPCAddr, "grpc-addr", "localhost:50051", "grpc address and port to run server")
 	flag.StringVar(&config.Key, "k", "", "key")
 	flag.StringVar(&config.CryptoKey, "crypto-key", "", "crypto-key")
 	configFile := flag.String("c", "", "path to config file")

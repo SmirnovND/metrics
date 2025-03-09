@@ -6,6 +6,9 @@ import (
 	"github.com/SmirnovND/metrics/internal/domain"
 	"github.com/SmirnovND/metrics/internal/interfaces"
 	"github.com/SmirnovND/metrics/internal/services/agent"
+	"github.com/SmirnovND/metrics/pb"
+	"google.golang.org/grpc"
+	"log"
 	"sync"
 	"time"
 )
@@ -54,6 +57,7 @@ func MetricsTracking(ctx context.Context, cf interfaces.ConfigAgent) {
 	sendTicker := time.NewTicker(time.Second * time.Duration(cf.GetReportInterval()))
 	defer sendTicker.Stop()
 
+	useGRPC := true
 	wg.Add(1)
 	go func() {
 		defer wg.Done()
@@ -63,7 +67,18 @@ func MetricsTracking(ctx context.Context, cf interfaces.ConfigAgent) {
 				fmt.Println("Завершаем отправку метрик")
 				return
 			case <-sendTicker.C:
-				agent.SendJSON(metrics, cf.GetServerHost(), cf.GetKey())
+				var sender agent.Sender
+				if useGRPC {
+					conn, err := grpc.Dial(cf.GetGRPCServerHost(), grpc.WithInsecure()) // Подключение к gRPC серверу
+					if err != nil {
+						log.Fatalf("Ошибка при подключении к gRPC: %v", err)
+					}
+					defer conn.Close()
+					sender = &agent.GRPCSender{Client: pb.NewMetricsServiceClient(conn)}
+				} else {
+					sender = &agent.HTTPSender{ServerHost: cf.GetServerHost(), Key: cf.GetKey()}
+				}
+				agent.SendJSON(metrics, sender)
 			}
 		}
 	}()

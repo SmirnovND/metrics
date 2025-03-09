@@ -3,12 +3,15 @@ package agent
 import (
 	"bytes"
 	"compress/gzip"
+	"context"
 	"encoding/json"
 	"fmt"
 	"github.com/SmirnovND/metrics/internal/domain"
 	"github.com/SmirnovND/metrics/internal/pkg/crypto"
+	"github.com/SmirnovND/metrics/pb"
 	"io"
 	"net/http"
+	"time"
 )
 
 // Send Метод для отправки метрик
@@ -35,37 +38,69 @@ func Send(m *domain.Metrics, serverHost string) {
 	}
 }
 
+type Sender interface {
+	Send(metrics []*domain.Metric) error
+}
+
+type HTTPSender struct {
+	ServerHost string
+	Key        string
+}
+
 // SendJSON метод для отправки метрик с шифрованием
-func SendJSON(m *domain.Metrics, serverHost string, key string) {
+func (h *HTTPSender) Send(metrics []*domain.Metric) error {
+	jsonData, err := json.Marshal(metrics)
+	if err != nil {
+		return fmt.Errorf("ошибка при сериализации метрики: %w", err)
+	}
+
+	url := fmt.Sprintf("%s/updates/", h.ServerHost)
+	req, err := http.NewRequest("POST", url, bytes.NewBuffer(jsonData))
+	if err != nil {
+		return fmt.Errorf("ошибка при создании запроса: %w", err)
+	}
+
+	crypto.SetSignature(req, jsonData, h.Key)
+	req.Header.Set("Content-Type", "application/json")
+
+	return baseSend(req, true)
+}
+
+func SendJSON(m *domain.Metrics, sender Sender) {
 	m.Mu.RLock()
 	defer m.Mu.RUnlock()
-	var metrics []*domain.Metric
-	url := fmt.Sprintf("%s/updates/", serverHost)
 
+	var metrics []*domain.Metric
 	for _, v := range m.Data {
 		metrics = append(metrics, v)
 	}
 
-	// Сериализация метрики в JSON
-	jsonData, err := json.Marshal(metrics)
+	err := sender.Send(metrics)
 	if err != nil {
-		fmt.Println("Ошибка при сериализации метрики:", err)
-		return
+		fmt.Println("Ошибка при отправке метрик:", err)
+	} else {
+		fmt.Println("Метрики успешно отправлены")
+	}
+}
+
+type GRPCSender struct {
+	Client pb.MetricsServiceClient
+}
+
+func (g *GRPCSender) Send(metrics []*domain.Metric) error {
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+
+	req := &pb.MetricsRequest{}
+	for _, m := range metrics {
+		req.Metrics = append(req.Metrics, &pb.Metric{
+			Id:    m.ID,
+			Value: m.Value,
+		})
 	}
 
-	// Создание HTTP-запроса
-	req, err := http.NewRequest("POST", url, bytes.NewBuffer(jsonData))
-	if err != nil {
-		fmt.Println("Error creating request:", err)
-		return
-	}
-	crypto.SetSignature(req, jsonData, key)
-	req.Header.Set("Content-Type", "application/json")
-
-	err = baseSend(req, true)
-	if err != nil {
-		return
-	}
+	_, err := g.Client.SendMetrics(ctx, req)
+	return err
 }
 
 func baseSend(req *http.Request, enableCompression bool) error {

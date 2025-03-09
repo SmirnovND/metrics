@@ -10,4 +10,5 @@ type ConfigServerInterface interface {
 	GetDBDsn() string
 	GetKey() string
 	GetCryptoKey() string
+	GetGRPCAddr() string
 }

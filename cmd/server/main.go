@@ -9,6 +9,9 @@ import (
 	"syscall"
 	"time"
 
+	"google.golang.org/grpc"
+	"net"
+
 	_ "github.com/SmirnovND/metrics/docs"
 	"github.com/SmirnovND/metrics/internal/interfaces"
 	"github.com/SmirnovND/metrics/internal/middleware"
@@ -54,7 +57,7 @@ func Run() error {
 
 	usecase.TimedBackup(cf, storage, db, stopCh)
 
-	server := &http.Server{
+	httpServer := &http.Server{
 		Addr: cf.GetFlagRunAddr(),
 		Handler: middleware.ChainMiddleware(
 			router.Handler(storage, db, cf.GetFlagRunAddr()),
@@ -70,6 +73,19 @@ func Run() error {
 		),
 	}
 
+	grpcServer := grpc.NewServer()
+	go func() {
+		listener, err := net.Listen("tcp", cf.GetGRPCAddr())
+		if err != nil {
+			fmt.Printf("Ошибка при запуске gRPC сервера: %v\n", err)
+			return
+		}
+		fmt.Println("Запуск gRPC сервера на", cf.GetGRPCAddr())
+		if err := grpcServer.Serve(listener); err != nil {
+			fmt.Printf("Ошибка при работе gRPC сервера: %v\n", err)
+		}
+	}()
+
 	// Канал для перехвата сигналов
 	sigChan := make(chan os.Signal, 1)
 	signal.Notify(sigChan, syscall.SIGTERM, syscall.SIGINT, syscall.SIGQUIT)
@@ -82,17 +98,19 @@ func Run() error {
 		ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 		defer cancel()
 
-		if err := server.Shutdown(ctx); err != nil {
-			fmt.Printf("Ошибка при завершении работы сервера: %v\n", err)
+		if err := httpServer.Shutdown(ctx); err != nil {
+			fmt.Printf("Ошибка при завершении работы HTTP сервера: %v\n", err)
 		}
+
+		grpcServer.GracefulStop()
 
 		usecase.Backup(cf, storage, db) // Сохранение несохраненных данных перед выходом
 	}()
 
-	// Запуск сервера и обработка ошибки завершения
-	err := server.ListenAndServe()
+	// Запуск HTTP сервера и обработка ошибки завершения
+	err := httpServer.ListenAndServe()
 	if err != nil && err != http.ErrServerClosed {
-		return fmt.Errorf("ошибка при запуске сервера: %w", err)
+		return fmt.Errorf("ошибка при запуске HTTP сервера: %w", err)
 	}
 
 	fmt.Println("Сервер завершил работу.")
