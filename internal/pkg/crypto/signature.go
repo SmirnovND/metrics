@@ -89,6 +89,9 @@ func WithCryptoKey(config interfaces.ConfigServerInterface, next http.Handler) h
 		// Проверяем хэш
 		computedHash := calculateHash(body, config.GetKey())
 		if hash != computedHash {
+
+			fmt.Println(hash)
+			fmt.Println(computedHash)
 			fmt.Println("__________________________Invalid HashSHA256____________________________")
 			http.Error(w, "Invalid HashSHA256", http.StatusBadRequest)
 			return

@@ -65,13 +65,6 @@ func Run() error {
 				return crypto.WithCryptoKey(cf, next)
 			},
 			func(next http.Handler) http.Handler {
-				privatKey, err := crypto.LoadPrivateKey(cf.GetCryptoKey())
-				if err != nil {
-					fmt.Println("Ошибка загрузки приватного ключа")
-				}
-				return crypto.WithDecryption(privatKey)(next) // Расшифровка данных перед валидацией хеша
-			},
-			func(next http.Handler) http.Handler {
 				return crypto.WithHashMiddleware(cf, next)
 			},
 		),
