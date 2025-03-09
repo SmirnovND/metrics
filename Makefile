@@ -15,10 +15,10 @@ help:
 
 
 up-server:
-	go run ./cmd/server/main.go -a=localhost:41839 -d=postgresql://developer:developer@localhost:5432/postgres?sslmode=disable -k=secretkey
+	go run ./cmd/server/main.go -a=localhost:41839 -d=postgresql://developer:developer@localhost:5432/postgres?sslmode=disable -k=secretkey -crypto-key=./.cert/private.pem
 
 up-agent:
-	go run ./cmd/agent/main.go -a=localhost:41839 -k=secretkey
+	go run ./cmd/agent/main.go -a=localhost:41839 -k= -crypto-key=./.cert/public.pem
 
 migrate-create:
 	migrate create -ext sql -dir migrations -seq $(name)

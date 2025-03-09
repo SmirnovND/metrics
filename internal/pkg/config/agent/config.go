@@ -1,9 +1,11 @@
 package agent
 
 import (
+	"encoding/json"
 	"flag"
 	"fmt"
 	"github.com/SmirnovND/metrics/internal/interfaces"
+	"io"
 	"os"
 	"strconv"
 )
@@ -15,11 +17,12 @@ const (
 )
 
 type Config struct {
-	ReportInterval int    `yaml:"reportInterval"`
-	PollInterval   int    `yaml:"pollInterval"`
-	ServerHost     string `yaml:"serverHost"`
-	Key            string `yaml:"key"`
-	RateLimit      int    `yaml:"rateLimit"`
+	ReportInterval int    `yaml:"reportInterval" json:"reportInterval"`
+	PollInterval   int    `yaml:"pollInterval" json:"pollInterval"`
+	ServerHost     string `yaml:"serverHost" json:"serverHost"`
+	Key            string `yaml:"key" json:"key"`
+	RateLimit      int    `yaml:"rateLimit" json:"rateLimit"`
+	CryptoKey      string `yaml:"cryptoKey" json:"cryptoKey"`
 }
 
 func (c *Config) GetReportInterval() int {
@@ -33,24 +36,34 @@ func (c *Config) GetPollInterval() int {
 func (c *Config) GetServerHost() string {
 	return c.ServerHost
 }
+
 func (c *Config) GetKey() string {
 	return c.Key
 }
+
 func (c *Config) GetRateLimit() int {
 	return c.RateLimit
+}
+
+func (c *Config) GetCryptoKey() string {
+	return c.CryptoKey
 }
 
 func NewConfigCommand() (cf interfaces.ConfigAgent) {
 	config := new(Config)
 
+	// Чтение флагов
 	flag.StringVar(&config.ServerHost, "a", "localhost:8080", "address and port to run server")
 	flag.IntVar(&config.ReportInterval, "r", reportInterval, "report interval")
 	flag.IntVar(&config.PollInterval, "p", pollInterval, "poll interval")
 	flag.StringVar(&config.Key, "k", "", "key")
 	flag.IntVar(&config.RateLimit, "l", rateLimit, "rateLimit")
+	flag.StringVar(&config.CryptoKey, "crypto-key", "", "crypto-key")
+	configFile := flag.String("c", "", "path to config file")
 
 	flag.Parse()
 
+	// Обработка переменных окружения
 	if envRunAddr := os.Getenv("ADDRESS"); envRunAddr != "" {
 		config.ServerHost = envRunAddr
 	}
@@ -80,6 +93,55 @@ func NewConfigCommand() (cf interfaces.ConfigAgent) {
 		}
 	}
 
+	if envCryptoKey := os.Getenv("CRYPTO_KEY"); envCryptoKey != "" {
+		config.CryptoKey = envCryptoKey
+	}
+
+	// Если файл конфигурации указан, загружаем его
+	if *configFile != "" {
+		file, err := os.Open(*configFile)
+		if err != nil {
+			fmt.Println("Ошибка открытия файла конфигурации:", err)
+			return nil
+		}
+		defer file.Close()
+
+		data, err := io.ReadAll(file)
+		if err != nil {
+			fmt.Println("Ошибка чтения файла конфигурации:", err)
+			return nil
+		}
+
+		// Парсим JSON из файла и применяем
+		var fileConfig Config
+		err = json.Unmarshal(data, &fileConfig)
+		if err != nil {
+			fmt.Println("Ошибка парсинга JSON из конфигурационного файла:", err)
+			return nil
+		}
+
+		// Перезаписываем только пустые поля, чтобы сохранить приоритет флагов и переменных окружения
+		if config.ReportInterval == reportInterval {
+			config.ReportInterval = fileConfig.ReportInterval
+		}
+		if config.PollInterval == pollInterval {
+			config.PollInterval = fileConfig.PollInterval
+		}
+		if config.ServerHost == "localhost:8080" {
+			config.ServerHost = fileConfig.ServerHost
+		}
+		if config.Key == "" {
+			config.Key = fileConfig.Key
+		}
+		if config.RateLimit == rateLimit {
+			config.RateLimit = fileConfig.RateLimit
+		}
+		if config.CryptoKey == "" {
+			config.CryptoKey = fileConfig.CryptoKey
+		}
+	}
+
+	// Формируем ServerHost
 	config.ServerHost = fmt.Sprintf("http://%s", config.ServerHost)
 	return config
 }

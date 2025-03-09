@@ -166,6 +166,11 @@ func TestRestoreMetric(t *testing.T) {
 
 type mockConfigServer struct{}
 
+func (m *mockConfigServer) GetCryptoKey() string {
+	//TODO implement me
+	panic("implement me")
+}
+
 func (m *mockConfigServer) GetFileStoragePath() string {
 	return "/tmp/backup.json"
 }
@@ -193,6 +198,11 @@ func (m *mockConfigServer) GetKey() string {
 // MockConfigServer - мок для ConfigServer
 type MockConfigServer struct {
 	mock.Mock
+}
+
+func (m *MockConfigServer) GetCryptoKey() string {
+	//TODO implement me
+	panic("implement me")
 }
 
 func (m *MockConfigServer) GetFileStoragePath() string {

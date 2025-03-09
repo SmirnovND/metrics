@@ -35,10 +35,10 @@ func Send(m *domain.Metrics, serverHost string) {
 	}
 }
 
-// SendJSON Метод для отправки метрик
+// SendJSON метод для отправки метрик с шифрованием
 func SendJSON(m *domain.Metrics, serverHost string, key string) {
-	m.Mu.RLock()         // Блокируем доступ к мапе
-	defer m.Mu.RUnlock() // Освобождаем доступ после обновления
+	m.Mu.RLock()
+	defer m.Mu.RUnlock()
 	var metrics []*domain.Metric
 	url := fmt.Sprintf("%s/updates/", serverHost)
 
@@ -53,13 +53,53 @@ func SendJSON(m *domain.Metrics, serverHost string, key string) {
 		return
 	}
 
+	// 2. Генерация AES-ключа
+	aesKey, err := crypto.GenerateAESKey()
+	if err != nil {
+		fmt.Println("Ошибка генерации AES-ключа:", err)
+		return
+	}
+
+	// 3. Шифрование JSON с помощью AES
+	encryptedData, err := crypto.EncryptAES(jsonData, aesKey)
+	if err != nil {
+		fmt.Println("Ошибка шифрования AES:", err)
+		return
+	}
+
+	// 4. Загрузка публичного RSA-ключа
+	publicKey, err := crypto.LoadPublicKey(key)
+	if err != nil {
+		fmt.Println("Ошибка загрузки публичного ключа:", err)
+		return
+	}
+
+	// 5. Шифрование AES-ключа с помощью RSA
+	encryptedAESKey, err := crypto.EncryptAESKey(aesKey, publicKey)
+	if err != nil {
+		fmt.Println("Ошибка шифрования AES-ключа:", err)
+		return
+	}
+
+	// 6. Формирование запроса
+	requestPayload := map[string]string{
+		"key":  encryptedAESKey,
+		"data": encryptedData,
+	}
+
+	finalJSON, err := json.Marshal(requestPayload)
+	if err != nil {
+		fmt.Println("Ошибка сериализации запроса:", err)
+		return
+	}
+
 	// Создание HTTP-запроса
-	req, err := http.NewRequest("POST", url, bytes.NewBuffer(jsonData))
+	req, err := http.NewRequest("POST", url, bytes.NewBuffer(finalJSON))
 	if err != nil {
 		fmt.Println("Error creating request:", err)
 		return
 	}
-	crypto.SetSignature(req, jsonData, key)
+
 	req.Header.Set("Content-Type", "application/json")
 
 	err = baseSend(req, true)
@@ -99,7 +139,7 @@ func baseSend(req *http.Request, enableCompression bool) error {
 	if resp.StatusCode == http.StatusOK {
 		fmt.Println("MetricInterface sent successfully")
 	} else {
-		fmt.Printf("Failed to send metric")
+		fmt.Printf("Failed to send metric: code - %d \n", resp.StatusCode)
 	}
 
 	return nil
