@@ -63,7 +63,7 @@ func MetricsTracking(ctx context.Context, cf interfaces.ConfigAgent) {
 				fmt.Println("Завершаем отправку метрик")
 				return
 			case <-sendTicker.C:
-				agent.SendJSON(metrics, cf.GetServerHost(), cf.GetCryptoKey())
+				agent.SendJSON(metrics, cf.GetServerHost(), cf.GetKey())
 			}
 		}
 	}()
