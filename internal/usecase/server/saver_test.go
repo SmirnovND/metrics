@@ -66,9 +66,9 @@ func TestSaveAndFindArr(t *testing.T) {
 	mockService.On("FindMetric", metrics[0].GetName(), metrics[0].GetType()).Return(metrics[0], nil)
 	mockService.On("FindMetric", metrics[1].GetName(), metrics[1].GetType()).Return(metrics[1], nil)
 
-	// Вызов функции SaveAndFindArr
+	// Вызов функции SaveAndFindArrHTTP
 	// Мы не будем вызывать HTTP-запрос, а просто проверим вызовы функций
-	result, err := SaveAndFindArr(metrics, mockService, nil)
+	result, err := SaveAndFindArrHTTP(metrics, mockService, nil)
 
 	// Проверяем, что ошибок не возникло
 	assert.NoError(t, err)

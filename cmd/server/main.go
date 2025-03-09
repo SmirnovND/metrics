@@ -3,6 +3,8 @@ package main
 import (
 	"context"
 	"fmt"
+	"github.com/SmirnovND/metrics/internal/controllers"
+	"github.com/SmirnovND/metrics/pb"
 	"net/http"
 	"os"
 	"os/signal"
@@ -46,10 +48,12 @@ func Run() error {
 	var cf interfaces.ConfigServerInterface
 	var storage *repo.MemStorage
 	var db *sqlx.DB
-	diContainer.Invoke(func(c interfaces.ConfigServerInterface, s *repo.MemStorage, d *sqlx.DB) {
+	var grpcService *controllers.ServiceServer
+	diContainer.Invoke(func(c interfaces.ConfigServerInterface, s *repo.MemStorage, d *sqlx.DB, grpcServerService *controllers.ServiceServer) {
 		cf = c
 		storage = s
 		db = d
+		grpcService = grpcServerService
 	})
 
 	stopCh := make(chan struct{})
@@ -57,6 +61,7 @@ func Run() error {
 
 	usecase.TimedBackup(cf, storage, db, stopCh)
 
+	// Запуск HTTP сервера
 	httpServer := &http.Server{
 		Addr: cf.GetFlagRunAddr(),
 		Handler: middleware.ChainMiddleware(
@@ -73,7 +78,10 @@ func Run() error {
 		),
 	}
 
+	// Запуск gRPC сервера
 	grpcServer := grpc.NewServer()
+	pb.RegisterMetricsServiceServer(grpcServer, grpcService)
+
 	go func() {
 		listener, err := net.Listen("tcp", cf.GetGRPCAddr())
 		if err != nil {

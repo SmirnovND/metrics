@@ -78,7 +78,7 @@ func (mc *MetricsController) HandleUpdatesJSON(w http.ResponseWriter, r *http.Re
 		return
 	}
 
-	JSONResponse, err := serverSaver.SaveAndFindArr(parseMetrics, mc.ServiceCollector, w)
+	JSONResponse, err := serverSaver.SaveAndFindArrHTTP(parseMetrics, mc.ServiceCollector, w)
 	if err != nil {
 		return
 	}

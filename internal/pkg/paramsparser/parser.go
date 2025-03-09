@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/SmirnovND/metrics/internal/domain"
+	"github.com/SmirnovND/metrics/pb"
 	"github.com/go-chi/chi/v5"
 	"net/http"
 	"strconv"
@@ -37,6 +38,24 @@ func JSONParseMetrics(w http.ResponseWriter, r *http.Request) ([]*domain.Metric,
 	}
 
 	return metrics, nil
+}
+
+// ConvertPbToDomain конвертирует массив метрик из protobuf типа в массив доменных метрик.
+func ConvertPbToDomain(pbMetrics []*pb.Metric) []*domain.Metric {
+	// Создаем слайс для доменных метрик с длиной, равной длине входного слайса
+	domainMetrics := make([]*domain.Metric, len(pbMetrics))
+
+	// Проходим по всем меткам и преобразуем их
+	for i, pbMetric := range pbMetrics {
+		domainMetrics[i] = &domain.Metric{
+			ID:    pbMetric.Id,
+			Value: pbMetric.Value,
+			MType: pbMetric.Type,
+			Delta: pbMetric.Delta,
+		}
+	}
+
+	return domainMetrics
 }
 
 // QueryParseMetricAndValue парсит параметры запроса из URL и создает объект метрики с заданным значением.
