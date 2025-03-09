@@ -15,7 +15,7 @@ help:
 
 
 up-server:
-	go run ./cmd/server/main.go -a=localhost:41839 -d=postgresql://developer:developer@localhost:5432/postgres?sslmode=disable -k=secretkey -crypto-key=./.cert/private.pem
+	go run ./cmd/server/main.go -a=localhost:41839 -d=postgresql://developer:developer@localhost:5432/postgres?sslmode=disable -k=secretkey -crypto-key=./.cert/private.pem -t=192.168.1.0/24
 
 up-agent:
 	go run ./cmd/agent/main.go -a=localhost:41839 -k= -crypto-key=./.cert/public.pem

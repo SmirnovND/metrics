@@ -11,4 +11,5 @@ type ConfigServerInterface interface {
 	GetKey() string
 	GetCryptoKey() string
 	GetGRPCAddr() string
+	GetTrustedSubnet() string
 }

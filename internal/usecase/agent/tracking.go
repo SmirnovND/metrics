@@ -57,7 +57,6 @@ func MetricsTracking(ctx context.Context, cf interfaces.ConfigAgent) {
 	sendTicker := time.NewTicker(time.Second * time.Duration(cf.GetReportInterval()))
 	defer sendTicker.Stop()
 
-	useGRPC := true
 	wg.Add(1)
 	go func() {
 		defer wg.Done()
@@ -68,7 +67,7 @@ func MetricsTracking(ctx context.Context, cf interfaces.ConfigAgent) {
 				return
 			case <-sendTicker.C:
 				var sender agent.Sender
-				if useGRPC {
+				if cf.IsUseGRPC() {
 					conn, err := grpc.Dial(cf.GetGRPCServerHost(), grpc.WithInsecure()) // Подключение к gRPC серверу
 					if err != nil {
 						log.Fatalf("Ошибка при подключении к gRPC: %v", err)

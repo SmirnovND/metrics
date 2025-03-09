@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"github.com/SmirnovND/metrics/internal/controllers"
+	"github.com/SmirnovND/metrics/internal/pkg/system"
 	"github.com/SmirnovND/metrics/pb"
 	"net/http"
 	"os"
@@ -69,6 +70,9 @@ func Run() error {
 			loggeer.WithLogging,
 			compressor.WithDecompression,
 			compressor.WithCompression,
+			func(next http.Handler) http.Handler {
+				return system.TrustedRangeMiddleware(cf, next)
+			},
 			func(next http.Handler) http.Handler {
 				return crypto.WithCryptoKey(cf, next)
 			},

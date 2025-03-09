@@ -21,6 +21,7 @@ type Config struct {
 	DBDsn           string `json:"database_dsn"`
 	Key             string `json:"key"`
 	CryptoKey       string `json:"crypto_key"`
+	TrustedSubnet   string `json:"trusted_subnet"`
 	GRPCAddr        string `json:"grpc_addr"`
 }
 
@@ -56,6 +57,10 @@ func (c *Config) GetCryptoKey() string {
 	return c.CryptoKey
 }
 
+func (c *Config) GetTrustedSubnet() string {
+	return c.TrustedSubnet
+}
+
 func NewConfigCommand() (cf interfaces.ConfigServerInterface) {
 	config := new(Config)
 
@@ -67,6 +72,7 @@ func NewConfigCommand() (cf interfaces.ConfigServerInterface) {
 	flag.StringVar(&config.GRPCAddr, "grpc-addr", "localhost:50051", "grpc address and port to run server")
 	flag.StringVar(&config.Key, "k", "", "key")
 	flag.StringVar(&config.CryptoKey, "crypto-key", "", "crypto-key")
+	flag.StringVar(&config.TrustedSubnet, "t", "", "trusted_subnet")
 	configFile := flag.String("c", "", "path to config file")
 
 	flag.Parse()
@@ -104,6 +110,10 @@ func NewConfigCommand() (cf interfaces.ConfigServerInterface) {
 
 	if envCryptoKey := os.Getenv("CRYPTO_KEY"); envCryptoKey != "" {
 		config.CryptoKey = envCryptoKey
+	}
+
+	if envTrustedSubnet := os.Getenv("TRUSTED_SUBNET"); envTrustedSubnet != "" {
+		config.TrustedSubnet = envTrustedSubnet
 	}
 
 	// Если файл конфигурации указан, загружаем его

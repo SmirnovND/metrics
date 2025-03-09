@@ -8,4 +8,5 @@ type ConfigAgent interface {
 	GetKey() string
 	GetRateLimit() int
 	GetCryptoKey() string
+	IsUseGRPC() bool
 }

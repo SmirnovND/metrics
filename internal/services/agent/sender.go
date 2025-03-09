@@ -5,9 +5,11 @@ import (
 	"compress/gzip"
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"github.com/SmirnovND/metrics/internal/domain"
 	"github.com/SmirnovND/metrics/internal/pkg/crypto"
+	"github.com/SmirnovND/metrics/internal/pkg/system"
 	"github.com/SmirnovND/metrics/pb"
 	"io"
 	"net/http"
@@ -119,6 +121,9 @@ func baseSend(req *http.Request, enableCompression bool) error {
 		req.Body = io.NopCloser(&buf)
 		req.ContentLength = int64(buf.Len())
 		req.Header.Set("Content-Encoding", "gzip")
+
+		ip, _ := system.GetLocalIP()
+		req.Header.Set("X-Real-IP", ip)
 	}
 
 	// Отправка запроса
@@ -135,6 +140,7 @@ func baseSend(req *http.Request, enableCompression bool) error {
 		fmt.Println("MetricInterface sent successfully")
 	} else {
 		fmt.Printf("Failed to send metric")
+		return errors.New("Failed to send metric")
 	}
 
 	return nil
