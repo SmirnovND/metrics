@@ -18,8 +18,8 @@ func SaveAndFind(
 	return FindAndResponseAsJSON(parseMetric, ServiceCollector, w)
 }
 
-// SaveAndFindArr сохраняет массив метрик и возвращает их обновленные значения в JSON-формате.
-func SaveAndFindArr(
+// SaveAndFindArrHTTP сохраняет массив метрик и возвращает их обновленные значения в JSON-формате.
+func SaveAndFindArrHTTP(
 	parseMetrics []*domain.Metric,
 	ServiceCollector interfaces.ServiceCollectorInterface,
 	w http.ResponseWriter,
@@ -43,6 +43,26 @@ func SaveAndFindArr(
 		return nil, fmt.Errorf("failed to marshal metric to JSON")
 	}
 	return JSONResponse, nil
+}
+
+// SaveAndFindArrHTTP
+func SaveAndFindArrGRPC(
+	parseMetrics []*domain.Metric,
+	ServiceCollector interfaces.ServiceCollectorInterface,
+) error {
+	var metricsResponse []*domain.Metric
+	for _, metric := range parseMetrics {
+		ServiceCollector.SaveMetric(metric)
+
+		metricResponse, err := ServiceCollector.FindMetric(metric.GetName(), metric.GetType())
+		if err != nil {
+			return fmt.Errorf("not found metric")
+		}
+
+		metricsResponse = append(metricsResponse, metricResponse.(*domain.Metric))
+	}
+
+	return nil
 }
 
 // FindAndResponseAsJSON выполняет поиск метрики и возвращает результат в формате JSON.

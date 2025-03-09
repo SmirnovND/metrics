@@ -3,11 +3,17 @@ package main
 import (
 	"context"
 	"fmt"
+	"github.com/SmirnovND/metrics/internal/controllers"
+	"github.com/SmirnovND/metrics/internal/pkg/system"
+	"github.com/SmirnovND/metrics/pb"
 	"net/http"
 	"os"
 	"os/signal"
 	"syscall"
 	"time"
+
+	"google.golang.org/grpc"
+	"net"
 
 	_ "github.com/SmirnovND/metrics/docs"
 	"github.com/SmirnovND/metrics/internal/interfaces"
@@ -43,10 +49,12 @@ func Run() error {
 	var cf interfaces.ConfigServerInterface
 	var storage *repo.MemStorage
 	var db *sqlx.DB
-	diContainer.Invoke(func(c interfaces.ConfigServerInterface, s *repo.MemStorage, d *sqlx.DB) {
+	var grpcService *controllers.ServiceServer
+	diContainer.Invoke(func(c interfaces.ConfigServerInterface, s *repo.MemStorage, d *sqlx.DB, grpcServerService *controllers.ServiceServer) {
 		cf = c
 		storage = s
 		db = d
+		grpcService = grpcServerService
 	})
 
 	stopCh := make(chan struct{})
@@ -54,13 +62,17 @@ func Run() error {
 
 	usecase.TimedBackup(cf, storage, db, stopCh)
 
-	server := &http.Server{
+	// Запуск HTTP сервера
+	httpServer := &http.Server{
 		Addr: cf.GetFlagRunAddr(),
 		Handler: middleware.ChainMiddleware(
 			router.Handler(storage, db, cf.GetFlagRunAddr()),
 			loggeer.WithLogging,
 			compressor.WithDecompression,
 			compressor.WithCompression,
+			func(next http.Handler) http.Handler {
+				return system.TrustedRangeMiddleware(cf, next)
+			},
 			func(next http.Handler) http.Handler {
 				return crypto.WithCryptoKey(cf, next)
 			},
@@ -69,6 +81,22 @@ func Run() error {
 			},
 		),
 	}
+
+	// Запуск gRPC сервера
+	grpcServer := grpc.NewServer()
+	pb.RegisterMetricsServiceServer(grpcServer, grpcService)
+
+	go func() {
+		listener, err := net.Listen("tcp", cf.GetGRPCAddr())
+		if err != nil {
+			fmt.Printf("Ошибка при запуске gRPC сервера: %v\n", err)
+			return
+		}
+		fmt.Println("Запуск gRPC сервера на", cf.GetGRPCAddr())
+		if err := grpcServer.Serve(listener); err != nil {
+			fmt.Printf("Ошибка при работе gRPC сервера: %v\n", err)
+		}
+	}()
 
 	// Канал для перехвата сигналов
 	sigChan := make(chan os.Signal, 1)
@@ -82,17 +110,19 @@ func Run() error {
 		ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 		defer cancel()
 
-		if err := server.Shutdown(ctx); err != nil {
-			fmt.Printf("Ошибка при завершении работы сервера: %v\n", err)
+		if err := httpServer.Shutdown(ctx); err != nil {
+			fmt.Printf("Ошибка при завершении работы HTTP сервера: %v\n", err)
 		}
+
+		grpcServer.GracefulStop()
 
 		usecase.Backup(cf, storage, db) // Сохранение несохраненных данных перед выходом
 	}()
 
-	// Запуск сервера и обработка ошибки завершения
-	err := server.ListenAndServe()
+	// Запуск HTTP сервера и обработка ошибки завершения
+	err := httpServer.ListenAndServe()
 	if err != nil && err != http.ErrServerClosed {
-		return fmt.Errorf("ошибка при запуске сервера: %w", err)
+		return fmt.Errorf("ошибка при запуске HTTP сервера: %w", err)
 	}
 
 	fmt.Println("Сервер завершил работу.")

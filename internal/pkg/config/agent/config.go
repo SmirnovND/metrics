@@ -20,9 +20,11 @@ type Config struct {
 	ReportInterval int    `yaml:"reportInterval" json:"reportInterval"`
 	PollInterval   int    `yaml:"pollInterval" json:"pollInterval"`
 	ServerHost     string `yaml:"serverHost" json:"serverHost"`
+	GRPCServerHost string `yaml:"GRPCServerHost" json:"GRPCServerHost"`
 	Key            string `yaml:"key" json:"key"`
 	RateLimit      int    `yaml:"rateLimit" json:"rateLimit"`
 	CryptoKey      string `yaml:"cryptoKey" json:"cryptoKey"`
+	UseGRPC        bool   `yaml:"use_grpc" json:"use_grpc"`
 }
 
 func (c *Config) GetReportInterval() int {
@@ -35,6 +37,12 @@ func (c *Config) GetPollInterval() int {
 
 func (c *Config) GetServerHost() string {
 	return c.ServerHost
+}
+func (c *Config) GetGRPCServerHost() string {
+	return c.GRPCServerHost
+}
+func (c *Config) IsUseGRPC() bool {
+	return c.UseGRPC
 }
 
 func (c *Config) GetKey() string {
@@ -54,11 +62,13 @@ func NewConfigCommand() (cf interfaces.ConfigAgent) {
 
 	// Чтение флагов
 	flag.StringVar(&config.ServerHost, "a", "localhost:8080", "address and port to run server")
+	flag.StringVar(&config.GRPCServerHost, "grpc-addr", "localhost:50051", "grpc address and port to run server")
 	flag.IntVar(&config.ReportInterval, "r", reportInterval, "report interval")
 	flag.IntVar(&config.PollInterval, "p", pollInterval, "poll interval")
 	flag.StringVar(&config.Key, "k", "", "key")
 	flag.IntVar(&config.RateLimit, "l", rateLimit, "rateLimit")
 	flag.StringVar(&config.CryptoKey, "crypto-key", "", "crypto-key")
+	flag.BoolVar(&config.UseGRPC, "use_grpc", false, "use_grpc")
 	configFile := flag.String("c", "", "path to config file")
 
 	flag.Parse()
@@ -79,6 +89,13 @@ func NewConfigCommand() (cf interfaces.ConfigAgent) {
 		envPollInterval, err := strconv.Atoi(envPollInterval)
 		if err == nil {
 			config.PollInterval = envPollInterval
+		}
+	}
+
+	if UseGRPC := os.Getenv("USE_GRPC"); UseGRPC != "" {
+		UseGRPCBool, err := strconv.ParseBool(UseGRPC)
+		if err == nil {
+			config.UseGRPC = UseGRPCBool
 		}
 	}
 
@@ -128,6 +145,9 @@ func NewConfigCommand() (cf interfaces.ConfigAgent) {
 			config.PollInterval = fileConfig.PollInterval
 		}
 		if config.ServerHost == "localhost:8080" {
+			config.ServerHost = fileConfig.ServerHost
+		}
+		if config.GRPCServerHost == "localhost:50051" {
 			config.ServerHost = fileConfig.ServerHost
 		}
 		if config.Key == "" {

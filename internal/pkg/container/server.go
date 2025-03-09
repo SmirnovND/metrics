@@ -1,11 +1,13 @@
 package container
 
 import (
+	"github.com/SmirnovND/metrics/internal/controllers"
 	"github.com/SmirnovND/metrics/internal/domain"
 	"github.com/SmirnovND/metrics/internal/interfaces"
 	config "github.com/SmirnovND/metrics/internal/pkg/config/server"
 	"github.com/SmirnovND/metrics/internal/pkg/db"
 	"github.com/SmirnovND/metrics/internal/repo"
+	"github.com/SmirnovND/metrics/internal/services/server"
 	"github.com/jmoiron/sqlx"
 	_ "github.com/lib/pq"
 	"go.uber.org/dig"
@@ -46,6 +48,16 @@ func (c *Container) provideDependencies() {
 	c.container.Provide(func(cf interfaces.ConfigServerInterface, db *sqlx.DB) *repo.MemStorage {
 		return repo.NewMetricRepo(c.startCollectionFunc(cf, db)).(*repo.MemStorage)
 	})
+
+	// Регистрируем репозиторий, передав конфигурацию
+	c.container.Provide(func(cf interfaces.ConfigServerInterface, db *sqlx.DB) interfaces.MemStorageInterface {
+		return repo.NewMetricRepo(c.startCollectionFunc(cf, db))
+	})
+
+	c.container.Provide(server.NewCollectorService)
+
+	// Регистрируем grpcServerService
+	c.container.Provide(controllers.NewServiceServer)
 }
 
 // Invoke - функция для вызова и инжекта зависимостей
